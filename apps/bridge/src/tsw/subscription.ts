@@ -1,6 +1,25 @@
+import type { TswSubscriptionRead } from "@tsw/shared";
 import type { TswClient } from "./client.js";
 
 export type SubscriptionValues = Map<string, Record<string, unknown> | undefined>;
+
+/**
+ * Keys a subscription read by path. The game echoes paths URL-encoded
+ * ("MR%20%28AirPipe%29"), so decode them to match the paths we asked for.
+ */
+export function entriesByPath(res: TswSubscriptionRead): SubscriptionValues {
+  const out: SubscriptionValues = new Map();
+  for (const entry of res.Entries ?? []) {
+    let path = entry.Path;
+    try {
+      path = decodeURIComponent(path);
+    } catch {
+      // Not valid percent-encoding; use as is.
+    }
+    out.set(path, entry.NodeValid ? entry.Values : undefined);
+  }
+  return out;
+}
 
 /**
  * One server-side subscription set: many paths read in a single request.
@@ -24,10 +43,7 @@ export class SubscriptionSet {
 
   /** Path -> Values. Paths with NodeValid=false map to undefined. */
   async read(): Promise<SubscriptionValues> {
-    const res = await this.client.readSubscription(this.id);
-    const out: SubscriptionValues = new Map();
-    for (const entry of res.Entries ?? []) out.set(entry.Path, entry.NodeValid ? entry.Values : undefined);
-    return out;
+    return entriesByPath(await this.client.readSubscription(this.id));
   }
 
   dispose(): Promise<unknown> {

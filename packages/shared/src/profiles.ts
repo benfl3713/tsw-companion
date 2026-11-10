@@ -127,17 +127,37 @@ export const PROFILES: LocoProfile[] = [
     },
   },
   {
-    // Bombardier Electrostar family. Paths beyond AWS/TPWS/DSD need a probe of
-    // the 377 to confirm; the desk falls back to the universal HUD values.
+    // Bombardier Electrostar family (verified on the Class 377/4). Its AWS/TPWS
+    // and DSD are different components from other UK stock, so they're listed
+    // here rather than taken from UK_SAFETY.
     id: "electrostar",
     name: "Class 377 Electrostar",
     match: "Class37[5-9]|Class387",
     screen: "electrostar",
     fields: {
-      ...UK_SAFETY,
+      awsSunflower: { path: `${CDA}/AWS_TPWS.Property.AWS_SunflowerState` },
+      awsWarning: { path: `${CDA}/AWS_TPWS.Function.Get_WarningIndicator` },
+      // TPWS here reports one combined brake demand, not separate train-stop/overspeed lamps.
+      tpwsTrainStop: { path: `${CDA}/AWS_TPWS.Property.bIsBrakeDemand_TPWS` },
+      safetyBrakeDemand: { path: `${CDA}/AWS_TPWS.Property.bIsBrakeDemand` },
+      // Vigilance warns once the timer reaches TimeToWarning (60 s); IsAlerterActive only means armed.
+      dsdElapsed: { path: `${CDA}/DSD.Function.GetElapsedTime` },
+      dsdTimeToWarning: { path: `${CDA}/DSD.Property.TimeToWarning` },
+      emergencyBrake: { path: `${CDA}.Property.bIsEmergencyBrake` },
+      // HUD brake gauges read absolute pressure on this unit, so use the simulation's gauge pressures.
       mainRes: { path: `${SIM}/MR (AirPipe).Pressure_BAR_G` },
       brakeCylinder: { path: `${SIM}/BrakeCylinder_1_1.Pressure_BAR_G` },
-      tractionLocked: { path: `${CDA}/TractionLockManager.Property.bIsLocked` },
+      // 9 notches: EB, B3, B2, B1, Off, P1–P4.
+      controllerNotch: { path: `${CDA}/PowerHandle.Function.GetCurrentNotchIndex`, field: "ReturnValue" },
+      controllerNotchCount: { path: `${CDA}/PowerHandle.Function.GetNotchCount`, field: "ReturnValue" },
+      speedSetActive: { path: `${SIM}/SpeedSetModifier.Active` },
+      speedSetPoint: { path: `${SIM}/SpeedSetModifier.SetPoint` },
+      doorFL: { path: `${CDA}/PassengerDoor_FL.Function.GetCurrentOutputValue`, field: "ReturnValue" },
+      doorFR: { path: `${CDA}/PassengerDoor_FR.Function.GetCurrentOutputValue`, field: "ReturnValue" },
+      doorBL: { path: `${CDA}/PassengerDoor_BL.Function.GetCurrentOutputValue`, field: "ReturnValue" },
+      doorBR: { path: `${CDA}/PassengerDoor_BR.Function.GetCurrentOutputValue`, field: "ReturnValue" },
+      draSet: { path: `${CDA}.Property.bIsDRA_Set` },
+      tractionLocked: { path: `${CDA}.Property.bIsTractionLocked` },
     },
   },
   {

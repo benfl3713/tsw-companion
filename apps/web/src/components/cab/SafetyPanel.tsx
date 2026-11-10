@@ -2,6 +2,18 @@ import type { CabValue } from "@tsw/shared";
 
 const on = (v: CabValue | undefined) => v === true || (typeof v === "number" && v !== 0);
 
+/**
+ * Vigilance warning, from a warning flag where the loco has one, or from its
+ * timer (e.g. the Electrostar's DSD warns when elapsed reaches TimeToWarning).
+ */
+export function dsdWarningActive(values: Record<string, CabValue> | undefined): boolean {
+  if (!values) return false;
+  if (on(values.dsdWarning)) return true;
+  const elapsed = values.dsdElapsed;
+  const limit = values.dsdTimeToWarning;
+  return typeof elapsed === "number" && typeof limit === "number" && limit > 0 && elapsed >= limit;
+}
+
 /** The AWS "sunflower": black at rest, yellow segments after a caution. */
 export function Sunflower({ active }: { active: boolean }) {
   const segments = Array.from({ length: 12 }, (_, i) => {
@@ -31,7 +43,13 @@ function Lamp({ label, lit, flashing, tone }: { label: string; lit: boolean; fla
 /** UK AWS / TPWS / DSD indicators. Values come from the loco's cab profile. */
 export function SafetyPanel({ values }: { values: Record<string, CabValue> | undefined }) {
   // Non-UK stock has none of these.
-  if (!values || (values.awsSunflower == null && values.tpwsTrainStop == null && values.dsdWarning == null)) return null;
+  if (
+    !values ||
+    (values.awsSunflower == null && values.tpwsTrainStop == null && values.dsdWarning == null && values.dsdElapsed == null)
+  ) {
+    return null;
+  }
+  const dsd = dsdWarningActive(values);
   return (
     <div className="safety">
       <div className="safety-aws">
@@ -42,7 +60,7 @@ export function SafetyPanel({ values }: { values: Record<string, CabValue> | und
         <Lamp label="Train stop" tone="red" lit={on(values.tpwsTrainStop)} flashing={on(values.tpwsTrainStopFlashing)} />
         <Lamp label="Overspeed" tone="red" lit={on(values.tpwsOverspeed)} flashing={on(values.tpwsOverspeedFlashing)} />
         <Lamp label="Brake demand" tone="red" lit={on(values.safetyBrakeDemand)} />
-        <Lamp label="DSD" tone="amber" lit={on(values.dsdWarning) || on(values.dsdPenalty)} flashing={on(values.dsdWarning)} />
+        <Lamp label="DSD" tone="amber" lit={dsd || on(values.dsdPenalty)} flashing={dsd} />
       </div>
     </div>
   );

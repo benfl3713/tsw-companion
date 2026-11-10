@@ -3,21 +3,27 @@ import type { CabValue, DriveState } from "@tsw/shared";
 import { toUnit, UNIT_LABEL } from "../../units";
 import { Gauge } from "./Gauge";
 import { SafetyPanel } from "./SafetyPanel";
-import { num, type CabDeskProps } from "./TmsDisplay";
+import { flag, num, type CabDeskProps } from "./TmsDisplay";
 
 // Class 375/377/379/387 (Bombardier Electrostar) desk: analogue speedometer,
-// duplex brake gauge, LED AWS sunflower and TPWS panel, with the MITRAC train
+// brake gauge, AWS sunflower and TPWS panel, with the MITRAC train
 // management screen on the IDU to the driver's left. Pages follow the
 // Electrostar's: Driver's Menu, Door Status, Traction Status.
 
 const PA_PER_BAR = 100_000;
 
+/** The 377's 9-position controller, by notch index. */
+const NOTCH_NAMES_9 = ["EB", "B3", "B2", "B1", "OFF", "P1", "P2", "P3", "P4"];
+
 /**
- * Electrostar controllers have 4 power notches and 3 brake steps plus
- * emergency. The HUD reports either notch numbers or a percentage.
+ * Controller position. Uses the controller's own notch index where the
+ * profile reads it (verified on the 377), else infers from the HUD handle,
+ * which reports notch numbers or a percentage.
  */
-export function controllerNotch(handle: number | null, emergency: boolean): string {
-  if (emergency) return "EB";
+export function controllerNotch(handle: number | null, values: Record<string, CabValue>): string {
+  const index = num(values.controllerNotch);
+  if (index != null && num(values.controllerNotchCount) === NOTCH_NAMES_9.length) return NOTCH_NAMES_9[index] ?? "OFF";
+  if (flag(values.emergencyBrake)) return "EB";
   if (handle == null || Math.abs(handle) < 0.5) return "OFF";
   const whole = Number.isInteger(handle);
   if (handle > 0) return `P${whole && handle <= 4 ? handle : Math.min(4, Math.ceil(handle / 25))}`;
@@ -48,20 +54,29 @@ function AnalogueClock({ iso }: { iso: string | undefined }) {
 
 type Page = "driver" | "doors" | "traction";
 
-function Mitrac({ drive, values, formationLength, clockIso }: {
+const DOORS = [
+  ["doorFL", "Front left"],
+  ["doorFR", "Front right"],
+  ["doorBL", "Rear left"],
+  ["doorBR", "Rear right"],
+] as const;
+
+function Mitrac({ drive, values, formationLength, clockIso, notch }: {
   drive: DriveState;
   values: Record<string, CabValue>;
   formationLength: number | null;
   clockIso: string | undefined;
+  notch: string;
 }) {
   const [page, setPage] = useState<Page>("driver");
   const cars = Math.min(formationLength ?? 4, 12);
-  const te = drive.tractiveEffort;
-  // Tractive effort comes as a fraction on some units and in newtons on others.
-  const tePct = te == null ? null : te <= 1.5 ? te * 100 : null;
-  const handle = drive.powerHandle ?? 0;
-  const brakePct = handle < 0 ? Math.min(100, -handle > 3 ? -handle : (-handle / 3) * 100) : 0;
-  const dooText = values.dooEnabled == null ? "—" : values.dooEnabled ? "Enabled" : "Not enabled";
+  const doorValues = DOORS.map(([key]) => num(values[key]));
+  const doorsKnown = doorValues.some((d) => d != null);
+  const doorsOpen = doorValues.some((d) => d != null && d > 0.01);
+  // Traction demand from the notch: P1–P4 = 25–100 %, B1–B3 = 33–100 % brake.
+  const step = Number(notch.slice(1));
+  const powerPct = notch.startsWith("P") ? step * 25 : 0;
+  const brakePct = notch === "EB" ? 100 : notch.startsWith("B") ? Math.round((step / 3) * 100) : 0;
 
   return (
     <div className="mitrac">
@@ -83,16 +98,18 @@ function Mitrac({ drive, values, formationLength, clockIso }: {
                   <td className="ok">OK</td>
                 </tr>
                 <tr>
-                  <td>Door isolations</td>
-                  <td className="ok">None</td>
+                  <td>Doors</td>
+                  <td className={doorsOpen ? "warn-dark" : "ok"}>{!doorsKnown ? "—" : doorsOpen ? "Open" : "Closed"}</td>
                 </tr>
                 <tr>
-                  <td>Traction sand</td>
-                  <td className="ok">Available</td>
+                  <td>Driver reminder (DRA)</td>
+                  <td className={flag(values.draSet) ? "warn-dark" : ""}>{values.draSet == null ? "—" : flag(values.draSet) ? "Set" : "Off"}</td>
                 </tr>
                 <tr>
-                  <td>Driver Only Operation</td>
-                  <td>{dooText}</td>
+                  <td>Traction</td>
+                  <td className={flag(values.tractionLocked) ? "warn-dark" : "ok"}>
+                    {flag(values.tractionLocked) ? "Interlocked" : "Available"}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -101,17 +118,25 @@ function Mitrac({ drive, values, formationLength, clockIso }: {
         )}
         {page === "doors" && (
           <div className="mitrac-doors">
-            {Array.from({ length: cars }, (_, i) => (
-              <div key={i} className="mitrac-car">
-                <span>Car {i + 1}</span>
-                <div className="mitrac-door-row">
-                  {[0, 1, 2, 3].map((d) => (
-                    <i key={d} className={values.doorsOpen ? "open" : ""} />
-                  ))}
-                </div>
+            <div className="mitrac-car wide">
+              <span>Car 1 (this vehicle)</span>
+              <div className="mitrac-door-grid">
+                {DOORS.map(([key, label], i) => (
+                  <div key={key} className="mitrac-door">
+                    <i className={(doorValues[i] ?? 0) > 0.01 ? "open" : ""} />
+                    <span>{label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-            <p className="mitrac-note">{values.doorsOpen == null ? "Door states not reported by this unit." : values.doorsOpen ? "Doors open" : "All doors closed and locked"}</p>
+            </div>
+            <p className="mitrac-note">
+              {!doorsKnown
+                ? "Door states not reported by this unit."
+                : doorsOpen
+                  ? "Doors open"
+                  : "All doors closed and locked"}
+              {doorsKnown && cars > 1 && " · Other vehicles aren't reported by the game."}
+            </p>
           </div>
         )}
         {page === "traction" && (
@@ -120,7 +145,7 @@ function Mitrac({ drive, values, formationLength, clockIso }: {
               <div key={i} className="mitrac-te">
                 <span>MCM {i + 1}</span>
                 <div className="mitrac-te-track">
-                  <div className="mitrac-te-fill power" style={{ width: `${Math.max(0, Math.min(100, tePct ?? (handle > 0 ? (handle > 4 ? handle : handle * 25) : 0)))}%` }} />
+                  <div className="mitrac-te-fill power" style={{ width: `${powerPct}%` }} />
                   <div className="mitrac-te-fill brake" style={{ width: `${brakePct}%` }} />
                 </div>
                 <span className="ok">OK</span>
@@ -131,6 +156,9 @@ function Mitrac({ drive, values, formationLength, clockIso }: {
               <span className="muted-dark">Auxiliary converters</span>
               <span className="ok">OK</span>
             </div>
+            <p className="mitrac-note">
+              Controller {notch} · {drive.isSlipping ? "Wheelslip!" : "No slip"}
+            </p>
           </div>
         )}
       </div>
@@ -155,15 +183,16 @@ export function Electrostar({ t, drive, unit }: CabDeskProps) {
   const v = t.cab?.values ?? {};
   const speed = toUnit(drive.speed ?? 0, unit);
   const top = unit === "mph" ? 120 : 200;
-  const speedSet = drive.speedControlTarget ? toUnit(drive.speedControlTarget, unit) : null;
-  // Prefer the HUD's own gauge; some units leave it at 0, so fall back to the simulation pressures.
-  const brakeBar = (pa: number | null, fallback: CabValue | undefined) =>
-    pa ? pa / PA_PER_BAR : (num(fallback) ?? (pa == null ? null : 0));
-  const emergency = v.safetyBrakeDemand === true || v.dsdPenalty === true;
+  const setPoint = flag(v.speedSetActive) ? num(v.speedSetPoint) : drive.speedControlTarget;
+  const speedSet = setPoint ? toUnit(setPoint, unit) : null;
+  // The simulation's gauge pressures first: the 377's HUD gauges report absolute pressure.
+  const pressure = (sim: CabValue | undefined, hudPa: number | null) =>
+    num(sim) ?? (hudPa == null ? null : Math.max(0, hudPa / PA_PER_BAR - 1.013));
+  const notch = controllerNotch(drive.powerHandle, v);
 
   return (
     <div className="desk desk-electrostar">
-      <Mitrac drive={drive} values={v} formationLength={t.loco?.formationLength ?? null} clockIso={t.world?.localTimeIso} />
+      <Mitrac drive={drive} values={v} formationLength={t.loco?.formationLength ?? null} clockIso={t.world?.localTimeIso} notch={notch} />
       <div className="es-cluster">
         <div className="es-speedo">
           <Gauge
@@ -185,14 +214,17 @@ export function Electrostar({ t, drive, unit }: CabDeskProps) {
             majorStep={2}
             minorStep={1}
             needles={[
-              { value: brakeBar(drive.brakeGauge1Red, v.mainRes), colour: "red" },
-              { value: brakeBar(drive.brakeGauge1, v.brakeCylinder), colour: "white" },
+              { value: pressure(v.mainRes, drive.brakeGauge1Red), colour: "red" },
+              { value: pressure(v.brakeCylinder, drive.brakeGauge1), colour: "white" },
             ]}
             digits={null}
           />
+          <div className="es-gauge-key">
+            <span className="red">● MR</span> <span>● BC</span>
+          </div>
           <div className="es-controller" aria-label="Power brake controller">
             <span className="es-controller-label">Controller</span>
-            <span className={`es-controller-notch ${emergency ? "eb" : ""}`}>{controllerNotch(drive.powerHandle, emergency)}</span>
+            <span className={`es-controller-notch ${notch === "EB" ? "eb" : ""}`}>{notch}</span>
           </div>
         </div>
         <div className="es-safety">

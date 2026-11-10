@@ -1,6 +1,7 @@
 import { adviseBraking, brakeTargets, DEFAULT_BRAKE_OPTIONS, type Telemetry } from "@tsw/shared";
 import { useAlertSound } from "../audio";
 import { useSettings } from "../settings";
+import { dsdWarningActive } from "./cab/SafetyPanel";
 import { formatDistance, limitIn, toUnit, UNIT_LABEL, type SpeedUnit } from "../units";
 
 const flag = (v: unknown) => v === true || (typeof v === "number" && v !== 0);
@@ -33,7 +34,7 @@ export function Alerts({ t, unit, sound }: { t: Telemetry; unit: SpeedUnit; soun
 
   const cab = t.cab?.values;
   const aws = show.aws && flag(cab?.awsWarning);
-  const dsd = show.vigilance && (flag(cab?.dsdWarning) || flag(d?.alerter));
+  const dsd = show.vigilance && (dsdWarningActive(cab) || flag(d?.alerter));
   const brakeDemand = show.brakeDemand && (flag(cab?.safetyBrakeDemand) || flag(cab?.dsdPenalty));
   const slipping = show.wheelslip && d?.isSlipping;
 

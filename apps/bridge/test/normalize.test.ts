@@ -10,6 +10,7 @@ import {
   normalizeTrackData,
   readField,
 } from "../src/telemetry/normalize.js";
+import { entriesByPath } from "../src/tsw/subscription.js";
 
 describe("clean", () => {
   it("treats FLT_MAX as missing", () => {
@@ -51,6 +52,21 @@ describe("readField", () => {
   it("falls back through alternative paths", () => {
     const spec = { path: ["AWS_TPWS_Service.GetAWS_SunflowerState", "BP_AWS_TPWS_Service.GetAWS_SunflowerState"], field: "CurrentState" };
     expect(readField(values, spec)).toBe(1);
+  });
+});
+
+describe("entriesByPath", () => {
+  it("decodes the URL-encoded paths the game echoes back", () => {
+    const values = entriesByPath({
+      RequestedSubscriptionID: 1,
+      Entries: [
+        { Path: "CurrentDrivableActor/Simulation/MR%20%28AirPipe%29.Pressure_BAR_G", NodeValid: true, Values: { Pressure_BAR_G: 7.6 } },
+        { Path: "DriverAid.Data", NodeValid: false },
+      ],
+    });
+    expect(values.get("CurrentDrivableActor/Simulation/MR (AirPipe).Pressure_BAR_G")).toEqual({ Pressure_BAR_G: 7.6 });
+    expect(values.has("DriverAid.Data")).toBe(true);
+    expect(values.get("DriverAid.Data")).toBeUndefined();
   });
 });
 
