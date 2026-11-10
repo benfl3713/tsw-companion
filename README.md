@@ -81,6 +81,8 @@ To add a loco, run `npm run probe` in its cab, find the values in `apps/bridge/d
 - Overspeed against the current limit.
 - **Braking advice** for the next lower limit or red signal: "Brake in …" shortly before the point where service braking (0.45 m/s²) must start, "BRAKE" once past it, and "BRAKE HARD" when more than 0.8 m/s² is needed. Tuning is in `packages/shared/src/braking.ts`.
 
+To read the real signals yourself, turn off **Settings → Signals → Show signal aspects**. The Ahead strip, the next-signal card, the map readout and the ETCS planning area then show where signals are but not their aspect, and braking advice stops planning for red signals (which would give them away). Limit braking advice still works.
+
 Tap **Sound off** in the top bar to enable alert tones on the tablet (browsers only allow sound after a tap, so you may need to tap it again after reloading).
 
 On a service, the **Service** card shows the service name, the dwell countdown at stops and door instructions. The API returns timetable times as empty values, so early/late running isn't available.

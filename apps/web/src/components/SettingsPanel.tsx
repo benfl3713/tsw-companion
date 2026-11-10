@@ -80,6 +80,18 @@ export function SettingsPanel({ unit, sound, awake, onToggleSound, onClose }: Pr
           <Toggle label="Alert sounds" on={sound} onChange={onToggleSound} />
         </div>
 
+        <h2>Signals</h2>
+        <div className="settings-row single">
+          <div className="col">
+            <span>Show signal aspects</span>
+            <span className="muted small">
+              Off shows where signals are but not what they're showing, so you read the real signal. Braking advice then
+              ignores signals too.
+            </span>
+          </div>
+          <Toggle label="Show signal aspects" on={settings.showAspects} onChange={(on) => update({ showAspects: on })} />
+        </div>
+
         <h2>Overspeed</h2>
         <label className="settings-slider">
           <span>

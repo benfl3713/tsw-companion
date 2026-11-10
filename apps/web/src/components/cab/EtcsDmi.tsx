@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { adviseBraking, brakeTargets, DEFAULT_BRAKE_OPTIONS, type DriverAidState, type TrackState } from "@tsw/shared";
-import { useSettings } from "../../settings";
+import { HIDDEN_ASPECT, useSettings } from "../../settings";
 import { store } from "../../telemetry";
 import { formatDistance, limitIn, toUnit, type SpeedUnit } from "../../units";
 
@@ -303,11 +303,18 @@ export function EtcsDmi({ unit, driverAid, track, speedSet, maxSpeed, clockIso, 
                 </g>
               );
             })}
-          {/* Red signals ahead (not part of ETCS; TSW's lookahead) */}
+          {/* Signals ahead (not part of ETCS; TSW's lookahead): red ones, or all of them
+              as plain markers when aspects are hidden in Settings. */}
           {(driverAid?.signals ?? [])
-            .filter((s) => /stop|danger/i.test(s.aspect) && s.distance <= planRange)
+            .filter((s) => s.distance <= planRange && (s.aspect === HIDDEN_ASPECT || /stop|danger/i.test(s.aspect)))
             .map((s, i) => (
-              <circle key={`r${i}`} cx={D.x + 200} cy={planY(s.distance, planRange)} r={5} fill={C.red} />
+              <circle
+                key={`r${i}`}
+                cx={D.x + 200}
+                cy={planY(s.distance, planRange)}
+                r={s.aspect === HIDDEN_ASPECT ? 4 : 5}
+                fill={s.aspect === HIDDEN_ASPECT ? C.mediumGrey : C.red}
+              />
             ))}
         </>
       )}

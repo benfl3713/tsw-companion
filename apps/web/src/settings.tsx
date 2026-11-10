@@ -24,6 +24,12 @@ export interface Settings {
   keepAwake: boolean;
   /** Show the Ahead strip beside the cab desk. */
   cabShowAhead: boolean;
+  /**
+   * Show what each signal ahead is showing. Off keeps where signals are but
+   * not their aspect, so you read the real signal (braking advice then
+   * ignores signals too, as it would give red ones away).
+   */
+  showAspects: boolean;
 }
 
 const ALL_ON: Record<AlertKey, boolean> = {
@@ -45,6 +51,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dmiPlanning: true,
   keepAwake: true,
   cabShowAhead: true,
+  showAspects: true,
 };
 
 const STORAGE_KEY = "tsw.settings";
@@ -91,6 +98,19 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     </SettingsContext.Provider>
   );
 }
+
+/**
+ * The lookahead as the driver should see it: with aspects hidden, signals
+ * keep their positions but lose what they show, so nothing downstream
+ * (colours, braking advice for red signals) can give it away.
+ */
+export function visibleDriverAid<T extends { signals: { aspect: string }[] } | null>(aid: T, showAspects: boolean): T {
+  if (!aid || showAspects) return aid;
+  return { ...aid, signals: aid.signals.map((s) => ({ ...s, aspect: HIDDEN_ASPECT })) };
+}
+
+/** Placeholder aspect when aspects are hidden; matches no colour or stop rule. */
+export const HIDDEN_ASPECT = "Hidden";
 
 export function useSettings(): SettingsContextValue {
   const ctx = useContext(SettingsContext);

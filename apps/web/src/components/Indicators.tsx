@@ -1,4 +1,5 @@
 import type { ObjectiveState, UpcomingLimit, UpcomingSignal } from "@tsw/shared";
+import { HIDDEN_ASPECT } from "../settings";
 import { formatDistance, limitIn, type SpeedUnit } from "../units";
 
 /** Rough colour class for the HUD's aspect names. Unknown names show as text only. */
@@ -53,7 +54,7 @@ export function NextSignal({ next, unit }: { next: UpcomingSignal | undefined; u
           </div>
           <div className="col">
             <span className="distance">{formatDistance(next.distance, unit)}</span>
-            <span className="muted small">{next.aspect.replace(/_/g, " ")}</span>
+            {next.aspect !== HIDDEN_ASPECT && <span className="muted small">{next.aspect.replace(/_/g, " ")}</span>}
           </div>
         </div>
       ) : (

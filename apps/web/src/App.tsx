@@ -9,7 +9,7 @@ import { dsdWarningActive } from "./components/cab/SafetyPanel";
 import { useSound } from "./audio";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { useFullscreen, useKeepAwake } from "./device";
-import { useSettings } from "./settings";
+import { useSettings, visibleDriverAid } from "./settings";
 import {
   aspectColour,
   Bar,
@@ -153,7 +153,9 @@ export function App() {
   const { settings } = useSettings();
   const awake = useKeepAwake(settings.keepAwake);
   const fullscreen = useFullscreen();
-  const t: Telemetry = state.data;
+  // Everything below sees the lookahead as the driver should: with aspects hidden in Settings,
+  // signals keep their positions but not what they show.
+  const t: Telemetry = { ...state.data, driverAid: visibleDriverAid(state.data.driverAid, settings.showAspects) };
   const ranges = useSeenRanges(t.loco?.objectClass, t.drive);
 
   const header = (
