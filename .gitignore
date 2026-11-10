@@ -4,3 +4,4 @@ dist/
 # Local API dumps can contain your profile name
 dumps/
 .env
+data/

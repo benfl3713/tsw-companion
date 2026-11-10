@@ -43,6 +43,8 @@ Open `http://<pc-ip>:31280/` on a tablet or phone on the same network. Add it to
 
 For UI work, `npm run dev:web` runs Vite with hot reload on port 5173 and forwards telemetry to the bridge. `npm run demo` runs the bridge on a synthetic looping route (signals, limit changes, platforms) so you can work without the game.
 
+**Recorded signals and limits:** the game only reports what's ahead of you, so the bridge learns the route as you drive. Each signal and limit change from the lookahead gets a position on an odometer integrated from speed. When the train reaches it, the bridge saves the train's own position and heading. That means no calibration between game coordinates and the map. Repeat passes refine the position, and items that drop out of the lookahead early (a different route at a junction) are discarded. Recordings are kept in `apps/bridge/data/recorded.json` (the demo uses `recorded-demo.json`) and appear on the map under **Recorded**.
+
 The **Map** view (switch in the top bar) shows the train's live position and heading with its trail, on OpenStreetMap with optional OpenRailwayMap layers for track, max speed and signals. A compact readout and the Ahead column stay visible so you can drive from the map. The game's position can sit 100–200 m off the real-world track, depending on the route.
 
 The **Cab** view draws a cab display for the current loco from live values (the game's own screens can't be streamed). Profiles in `packages/shared/src/profiles.ts` choose the screen and the extra API paths it reads:

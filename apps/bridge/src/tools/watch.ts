@@ -21,6 +21,7 @@ ws.on("close", () => {
 ws.on("error", (err) => console.error(`Cannot connect to ${url}: ${err.message}`));
 ws.on("message", (raw) => {
   const msg = JSON.parse(raw.toString()) as ServerMessage;
+  if (msg.type === "recorded") return;
   Object.assign(state, msg.data);
   if (msg.type === "update" && msg.data.drive) driveUpdates++;
 });

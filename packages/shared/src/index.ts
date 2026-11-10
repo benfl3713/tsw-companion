@@ -246,9 +246,30 @@ export interface WorldState {
   fogDensity: number | null;
 }
 
+/**
+ * A signal or speed-limit change recorded by driving past it. Positions are
+ * where the game put the train when it reached the item.
+ */
+export interface RecordedFeature {
+  id: string;
+  kind: "signal" | "limit";
+  latitude: number;
+  longitude: number;
+  /** Direction of travel when passed, degrees from north. */
+  bearing: number;
+  /** New limit in m/s (limits only). */
+  limit?: number;
+  limitType?: string;
+  /** How many passes have confirmed it. */
+  seen: number;
+  lastSeen: string;
+}
+
 // WebSocket protocol, bridge -> client.
 export type TelemetrySection = keyof Telemetry;
 
 export type ServerMessage =
   | { type: "snapshot"; seq: number; t: number; data: Telemetry }
-  | { type: "update"; seq: number; t: number; data: Partial<Telemetry> };
+  | { type: "update"; seq: number; t: number; data: Partial<Telemetry> }
+  /** All recorded features on connect (replace), then additions and changes. */
+  | { type: "recorded"; replace: boolean; features: RecordedFeature[] };

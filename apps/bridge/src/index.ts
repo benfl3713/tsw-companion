@@ -4,8 +4,11 @@
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import qrcode from "qrcode-terminal";
+import type { Telemetry } from "@tsw/shared";
+import { RouteRecorder } from "./route/recorder.js";
 import { DEFAULT_BASE_URL } from "./tsw/client.js";
 import { runDemo } from "./telemetry/demo.js";
 import { TelemetryLoop } from "./telemetry/loop.js";
@@ -36,8 +39,21 @@ if (!existsSync(join(WEB_DIST, "index.html"))) {
   qrcode.generate(best, { small: true });
 }
 
+// Signals and limits learnt by driving. The demo keeps its own file so its
+// made-up route never mixes with real recordings.
+const recordFile = fileURLToPath(new URL(`../data/${args.demo ? "recorded-demo" : "recorded"}.json`, import.meta.url));
+const recorder = new RouteRecorder(recordFile, (changed) => server.broadcastRecorded(changed));
+server.recorded = () => recorder.all();
+console.log(`\nRecorded signals and limits: ${recorder.all().length} (${recordFile})`);
+
+const publish = (update: Partial<Telemetry>) => {
+  server.update(update);
+  recorder.observe(update);
+};
+
 const shutdown = () => {
   loop?.stop();
+  recorder.save();
   server.close();
   process.exit(0);
 };
@@ -46,9 +62,9 @@ process.on("SIGTERM", shutdown);
 
 let loop: TelemetryLoop | undefined;
 if (args.demo) {
-  console.log("\nDemo mode: streaming a synthetic route, not the game.");
-  runDemo((update) => server.update(update));
+  console.log("Demo mode: streaming a synthetic route, not the game.");
+  runDemo(publish);
 } else {
-  loop = new TelemetryLoop((update) => server.update(update), { key: args.key, baseUrl: args.url });
+  loop = new TelemetryLoop(publish, { key: args.key, baseUrl: args.url });
   await loop.run();
 }

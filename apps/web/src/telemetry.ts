@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import type { ServerMessage, Telemetry } from "@tsw/shared";
+import type { RecordedFeature, ServerMessage, Telemetry } from "@tsw/shared";
 
 export type LinkStatus = "connecting" | "open" | "closed";
 
@@ -8,6 +8,8 @@ export interface StoreState {
   data: Telemetry;
   /** Drive updates received in the last second. */
   driveHz: number;
+  /** Signals and limits the bridge has learnt by driving. */
+  recorded: RecordedFeature[];
 }
 
 const EMPTY: Telemetry = {
@@ -31,7 +33,7 @@ const MAX_EXTRAPOLATION_S = 0.1;
  * the speedo can animate at display rate without re-rendering.
  */
 class TelemetryStore {
-  private state: StoreState = { link: "connecting", data: EMPTY, driveHz: 0 };
+  private state: StoreState = { link: "connecting", data: EMPTY, driveHz: 0, recorded: [] };
   private listeners = new Set<() => void>();
   private driveCount = 0;
   private lastSpeed = { speed: 0, acceleration: 0, at: 0 };
@@ -63,6 +65,12 @@ class TelemetryStore {
     };
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data as string) as ServerMessage;
+      if (msg.type === "recorded") {
+        const byId = new Map(msg.replace ? [] : this.state.recorded.map((f) => [f.id, f]));
+        for (const f of msg.features) byId.set(f.id, f);
+        this.set({ recorded: [...byId.values()] });
+        return;
+      }
       const data = msg.type === "snapshot" ? msg.data : { ...this.state.data, ...msg.data };
       if (msg.data.drive) {
         const now = performance.now();

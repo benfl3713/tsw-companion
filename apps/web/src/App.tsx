@@ -228,7 +228,13 @@ export function App() {
       {/* The map stays mounted so its trail and tiles survive switching views. */}
       <main className={`map-view ${view === "map" ? "" : "hidden"}`}>
         <div className="map-col">
-          <RouteMap position={t.position} trailKey={t.loco?.objectClass} visible={view === "map"} />
+          <RouteMap
+            position={t.position}
+            trailKey={t.loco?.objectClass}
+            visible={view === "map"}
+            recorded={state.recorded}
+            unit={unit}
+          />
           <div className="map-hud card">
             <div className="col">
               <span className={`hud-speed ${limit != null && toUnit(d.speed ?? 0, unit) > limit + 0.5 ? "over" : ""}`}>

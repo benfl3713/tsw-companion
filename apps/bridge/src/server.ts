@@ -3,7 +3,7 @@ import { createServer, type ServerResponse, type Server } from "node:http";
 import { networkInterfaces } from "node:os";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { ServerMessage, Telemetry } from "@tsw/shared";
+import type { RecordedFeature, ServerMessage, Telemetry } from "@tsw/shared";
 import { WebSocketServer, WebSocket } from "ws";
 
 export const DEFAULT_PORT = 31280;
@@ -73,6 +73,8 @@ export class TelemetryServer {
   private seq = 0;
   private readonly http: Server;
   private readonly wss: WebSocketServer;
+  /** Supplies recorded signals/limits for new clients. */
+  recorded: () => RecordedFeature[] = () => [];
 
   constructor() {
     this.http = createServer((req, res) => {
@@ -87,7 +89,14 @@ export class TelemetryServer {
     this.wss = new WebSocketServer({ server: this.http, path: "/ws" });
     this.wss.on("connection", (ws) => {
       this.send(ws, { type: "snapshot", seq: this.seq, t: Date.now(), data: this.state });
+      this.send(ws, { type: "recorded", replace: true, features: this.recorded() });
     });
+  }
+
+  /** Sends newly recorded or updated features to every client. */
+  broadcastRecorded(features: RecordedFeature[]) {
+    const message = JSON.stringify({ type: "recorded", replace: false, features } satisfies ServerMessage);
+    for (const ws of this.wss.clients) if (ws.readyState === WebSocket.OPEN) ws.send(message);
   }
 
   update(partial: Partial<Telemetry>) {
