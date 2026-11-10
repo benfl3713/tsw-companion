@@ -20,6 +20,18 @@ const PLATFORMS = [
   { name: "Kingsgate", at: 19500, length: 280 },
 ];
 
+// The loop is drawn as a circle on the map.
+const CENTRE = { lat: 51.5, lon: -0.45 };
+const RADIUS_M = ROUTE_LENGTH / (2 * Math.PI);
+
+function geoAt(pos: number) {
+  const a = (pos / ROUTE_LENGTH) * 2 * Math.PI;
+  return {
+    latitude: CENTRE.lat + (RADIUS_M * Math.cos(a)) / 111_320,
+    longitude: CENTRE.lon + (RADIUS_M * Math.sin(a)) / (111_320 * Math.cos((CENTRE.lat * Math.PI) / 180)),
+  };
+}
+
 /** Distance from pos to target going forward around the loop. */
 const ahead = (pos: number, at: number) => (at - pos + ROUTE_LENGTH) % ROUTE_LENGTH;
 
@@ -100,6 +112,7 @@ export function runDemo(onUpdate: UpdateListener): () => void {
         signals,
         limits,
       },
+      position: { ...geoAt(pos), cameraMode: "FirstPerson_Driving", serviceName: "1D99 Demo service" },
       track: {
         markers: PLATFORMS.map((p) => ({
           name: p.name,

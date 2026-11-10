@@ -1,10 +1,44 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { DriveState, Telemetry } from "@tsw/shared";
-import { Bar, CurrentLimit, Gradient, NextLimit, NextSignal, NextStop } from "./components/Indicators";
+import {
+  aspectColour,
+  Bar,
+  CurrentLimit,
+  Gradient,
+  LimitSign,
+  NextLimit,
+  NextSignal,
+  NextStop,
+} from "./components/Indicators";
+import { RouteMap } from "./components/RouteMap";
 import { dialMax, Speedometer } from "./components/Speedometer";
 import { UpcomingStrip } from "./components/UpcomingStrip";
 import { useTelemetry, type StoreState } from "./telemetry";
-import { limitIn, toUnit, UNIT_LABEL, useSpeedUnit } from "./units";
+import { formatDistance, limitIn, toUnit, UNIT_LABEL, useSpeedUnit } from "./units";
+
+type View = "drive" | "map";
+const VIEW_KEY = "tsw.view";
+
+function useView(): [View, (v: View) => void] {
+  const [view, setView] = useState<View>(() => {
+    try {
+      return localStorage.getItem(VIEW_KEY) === "map" ? "map" : "drive";
+    } catch {
+      return "drive";
+    }
+  });
+  return [
+    view,
+    (v) => {
+      setView(v);
+      try {
+        localStorage.setItem(VIEW_KEY, v);
+      } catch {
+        // Not persisted; fine.
+      }
+    },
+  ];
+}
 
 // Numeric HUD values shown as bars once a loco has used them.
 const CONTROLS: { key: keyof DriveState; label: string; percent?: boolean }[] = [
@@ -78,6 +112,7 @@ function prettyLoco(objectClass: string) {
 export function App() {
   const state = useTelemetry();
   const [unit, toggleUnit] = useSpeedUnit();
+  const [view, setView] = useView();
   const t: Telemetry = state.data;
   const ranges = useSeenRanges(t.loco?.objectClass, t.drive);
 
@@ -87,6 +122,13 @@ export function App() {
       <span className="loco">{t.loco ? prettyLoco(t.loco.objectClass) : "TSW Companion"}</span>
       {t.position?.serviceName && <span className="muted">{t.position.serviceName}</span>}
       <span className="spacer" />
+      <div className="segmented" role="tablist">
+        {(["drive", "map"] as const).map((v) => (
+          <button key={v} role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>
+            {v === "drive" ? "Drive" : "Map"}
+          </button>
+        ))}
+      </div>
       <span className="clock">{formatClock(t.world?.localTimeIso)}</span>
       <span className="muted small" title="Drive updates per second">
         {state.driveHz} Hz
@@ -113,13 +155,48 @@ export function App() {
   const maxSpeed = aid?.formationMaxSpeed ?? (d.maxPermittedSpeed || null) ?? aid?.trackMaxSpeed ?? null;
   const target = d.speedControlTarget ? Math.round(toUnit(d.speedControlTarget, unit)) : null;
 
+  const signal = aid?.signals[0];
+  const nextLimit = aid?.limits[0];
+
   return (
     <div className="app">
       {header}
       {d.alerter ? <div className="alert vigilance">VIGILANCE: acknowledge</div> : null}
       {d.isSlipping ? <div className="alert slip">WHEELSLIP</div> : null}
 
-      <main className="panel">
+      {/* The map stays mounted so its trail and tiles survive switching views. */}
+      <main className={`map-view ${view === "map" ? "" : "hidden"}`}>
+        <div className="map-col">
+          <RouteMap position={t.position} trailKey={t.loco?.objectClass} visible={view === "map"} />
+          <div className="map-hud card">
+            <div className="col">
+              <span className={`hud-speed ${limit != null && toUnit(d.speed ?? 0, unit) > limit + 0.5 ? "over" : ""}`}>
+                {Math.round(toUnit(d.speed ?? 0, unit))}
+              </span>
+              <span className="muted small">{UNIT_LABEL[unit]}</span>
+            </div>
+            <LimitSign value={limit} size="small" />
+            {signal && (
+              <div className="row">
+                <div className={`signal-head ${aspectColour(signal.aspect)}`} aria-hidden>
+                  <i />
+                  <i />
+                </div>
+                <span className="hud-distance">{formatDistance(signal.distance, unit)}</span>
+              </div>
+            )}
+            {nextLimit && (
+              <div className="row">
+                <LimitSign value={limitIn(nextLimit.limit, unit)} size="small" />
+                <span className="hud-distance">{formatDistance(nextLimit.distance, unit)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        {view === "map" && <UpcomingStrip driverAid={aid} track={t.track} unit={unit} />}
+      </main>
+
+      <main className={`panel ${view === "drive" ? "" : "hidden"}`}>
         <section className="speedo-wrap">
           <Speedometer unit={unit} max={dialMax(maxSpeed, unit)} limit={limit} target={target} />
           <div className="speedo-meta">
@@ -158,7 +235,7 @@ export function App() {
           </section>
         </section>
 
-        <UpcomingStrip driverAid={aid} track={t.track} unit={unit} />
+        {view === "drive" && <UpcomingStrip driverAid={aid} track={t.track} unit={unit} />}
       </main>
     </div>
   );
