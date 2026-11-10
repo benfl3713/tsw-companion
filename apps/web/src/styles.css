@@ -432,12 +432,21 @@ textarea {
   flex: 1;
   min-height: 0;
   display: flex;
+  gap: 12px;
   padding: 12px;
   background: #050607;
 }
+/* The Ahead strip sits beside the desk as a narrow column. */
+.cab-view > .strip {
+  flex: 0 0 200px;
+}
 @media (orientation: portrait), (max-width: 760px) {
   .cab-view {
+    flex-direction: column;
     overflow-y: auto;
+  }
+  .cab-view > .strip {
+    flex: 0 0 420px;
   }
 }
 
@@ -451,7 +460,7 @@ textarea {
 }
 .desk-hitachi,
 .desk-siemens {
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.7fr) minmax(250px, 1fr);
 }
 .desk-electrostar {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
@@ -466,9 +475,13 @@ textarea {
 
 /* ETCS DMI: a 4:3 screen in a black bezel */
 .dmi {
+  /* Bezel hugs the 4:3 screen rather than letterboxing it. */
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
   max-height: calc(100vh - 110px);
+  align-self: center;
+  justify-self: center;
   border: 8px solid #000;
   border-radius: 10px;
   background: #031122;
@@ -610,6 +623,43 @@ textarea {
 }
 .mitrac-door-row i.open {
   background: #d68400;
+}
+.mitrac .warn-dark {
+  color: #b35c00;
+  font-weight: 700;
+}
+.mitrac-car.wide {
+  grid-column: 1 / -1;
+}
+.mitrac-door-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+.mitrac-door {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+}
+.mitrac-door i {
+  width: 28px;
+  height: 16px;
+  border-radius: 2px;
+  background: #0a7a2f;
+}
+.mitrac-door i.open {
+  background: #d68400;
+}
+.es-gauge-key {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #c9d1d9;
+}
+.es-gauge-key .red {
+  color: #ef4b4b;
 }
 .mitrac-note {
   grid-column: 1 / -1;

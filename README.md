@@ -61,8 +61,14 @@ The **Cab** view replicates the current loco's own desk displays, full screen, b
 
 - **Class 800/801/802/805/807/810 (Hitachi AT300)**: an ETCS driver display (DMI) as the speedometer, laid out to the ERA DMI specification. It has the permitted-speed band and hook, a distance-to-target bar, a speed-set marker, and needle colours by supervision status. Beside it is the train management screen: status bar, status tiles, traction/brake demand and MR/BP/BC pressures.
 - **Class 700/707 (Siemens Desiro City)**: the same DMI, with a train control screen showing AC/DC supply, pantograph, shoes, regenerative braking and brake hold.
-- **Class 375/377/379/387 (Electrostar)**: the MITRAC display (Driver's Menu with clock, Door Status, Traction Status), a black-faced analogue speedometer with a red speed-set pointer, a brake gauge (main reservoir red, brake cylinder white), a power/brake controller readout (P1–P4, B1–B3, EB) and the AWS/TPWS panel.
+- **Class 375/377/379/387 (Electrostar)**, verified on the 377/4:
+  - **MITRAC display:** Driver's Menu (doors, DRA, traction interlock, clock), Door Status for the driving vehicle's four doors, and Traction Status.
+  - **Instruments:** a black-faced analogue speedometer with a red speed-set pointer, and a brake gauge showing main reservoir (red) and brake cylinder (white) from the simulation.
+  - **Controller readout:** the controller's own notch (EB, B3–B1, OFF, P1–P4).
+  - **AWS/TPWS and vigilance:** the 377's own interface; vigilance warns when its 60-second timer runs out.
 - **Anything else**: an analogue speedometer, brake gauges, ammeter and engine RPM (shown once the loco reports them), plus AWS/TPWS/DSD where fitted.
+
+The **Ahead** strip also sits beside the cab desk. Turn it off in **Settings → Cab displays** for a desk-only view.
 
 The DMI's planning area (speed profile, gradients and red signals ahead) is filled from TSW's lookahead. A real DMI outside ETCS areas leaves it blank, so it can be turned off in Settings.
 

@@ -5,6 +5,7 @@ import { DesiroCity } from "./components/cab/DesiroCity";
 import { Electrostar } from "./components/cab/Electrostar";
 import { HitachiAt300 } from "./components/cab/HitachiAt300";
 import { Alerts } from "./components/Alerts";
+import { dsdWarningActive } from "./components/cab/SafetyPanel";
 import { useSound } from "./audio";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { useFullscreen, useKeepAwake } from "./device";
@@ -231,7 +232,7 @@ export function App() {
   const cabMessage =
     cabValues?.awsWarning
       ? "AWS: acknowledge"
-      : cabValues?.dsdWarning || d.alerter
+      : dsdWarningActive(cabValues) || d.alerter
         ? "Vigilance: acknowledge"
         : cabValues?.safetyBrakeDemand
           ? "Brake demand"
@@ -266,6 +267,7 @@ export function App() {
               target={target}
             />
           )}
+          {settings.cabShowAhead && <UpcomingStrip driverAid={aid} track={t.track} unit={unit} />}
         </main>
       )}
 

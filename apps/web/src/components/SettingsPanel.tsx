@@ -150,6 +150,13 @@ export function SettingsPanel({ unit, sound, awake, onToggleSound, onClose }: Pr
         <h2>Cab displays</h2>
         <div className="settings-row single">
           <div className="col">
+            <span>Ahead strip in Cab view</span>
+            <span className="muted small">Signals, limit changes and platforms coming up, beside the cab desk.</span>
+          </div>
+          <Toggle label="Ahead strip in Cab view" on={settings.cabShowAhead} onChange={(on) => update({ cabShowAhead: on })} />
+        </div>
+        <div className="settings-row single">
+          <div className="col">
             <span>ETCS planning area</span>
             <span className="muted small">
               Show limits, gradients and red signals ahead on the 700/80x display. Off matches a real DMI outside ETCS areas.

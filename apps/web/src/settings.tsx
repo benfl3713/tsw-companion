@@ -22,6 +22,8 @@ export interface Settings {
   dmiPlanning: boolean;
   /** Stop the tablet dimming and locking while the app is open. */
   keepAwake: boolean;
+  /** Show the Ahead strip beside the cab desk. */
+  cabShowAhead: boolean;
 }
 
 const ALL_ON: Record<AlertKey, boolean> = {
@@ -42,6 +44,7 @@ export const DEFAULT_SETTINGS: Settings = {
   urgentDecel: 0.8,
   dmiPlanning: true,
   keepAwake: true,
+  cabShowAhead: true,
 };
 
 const STORAGE_KEY = "tsw.settings";
