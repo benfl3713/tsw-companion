@@ -1,0 +1,16 @@
+{
+  "name": "@tsw/bridge",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "probe": "tsx src/probe/index.ts",
+    "watch": "tsx src/tools/watch.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tsw/shared": "*",
+    "ws": "^8.22.2"
+  }
+}

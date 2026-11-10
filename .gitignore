@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tsbuildinfo
+# Local API dumps can contain your profile name
+dumps/
+.env

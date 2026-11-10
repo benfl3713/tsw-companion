@@ -1,0 +1,93 @@
+{
+  "RequestedSubscriptionID": 4242,
+  "Entries": [
+    {
+      "Path": "CurrentDrivableActor.Function.HUD_GetSpeed",
+      "NodeValid": true,
+      "Values": {
+        "Speed (ms)": 6.886841297149658
+      }
+    },
+    {
+      "Path": "DriverAid.Data",
+      "NodeValid": true,
+      "Values": {
+        "signalSeen": false,
+        "speedLimitSeen": false,
+        "distanceToSignal": 0,
+        "distanceToNextSpeedLimit": 0,
+        "gradient": 0,
+        "signalAspectClass": "Clear",
+        "signalPropertyGuid": "00000000000000000000000000000000",
+        "bSignalIsPermissive": false,
+        "speedLimit": {
+          "value": 11.111111640930176
+        },
+        "nextSpeedLimit": {
+          "value": 0
+        },
+        "currentSpeedLimitSource": "TrackSpeedLimit",
+        "trackMaxSpeed": {
+          "value": 11.111111640930176
+        },
+        "serviceMaxSpeed": {
+          "value": 3.4028234663852886e+38
+        },
+        "formationMaxSpeed": {
+          "value": 3.4028234663852886e+38
+        },
+        "nextSignalPosition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "nextSpeedLimitPosition": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "nextSpeedLimits": [],
+        "nextSignals": [],
+        "nextSignalProperty": {
+          "ribbonReference": "00000000000000000000000000000000",
+          "propertyReference": "00000000000000000000000000000000"
+        },
+        "trackRestrictionQuery": {
+          "maxSearchDistance": {
+            "value": 10000
+          },
+          "searchDirection": "Forwards",
+          "bWholeFormation": true,
+          "bUseOverrideAncillarySpeedClasses": false,
+          "maxReturnedSignals": 4,
+          "signalFlags": 7,
+          "maxReturnedSpeedLimits": 4,
+          "speedLimitFlags": 1,
+          "speedCurveQueries": [],
+          "speedCurveFlags": 515,
+          "overrideAncillarySpeedClasses": [],
+          "foundSignals": [],
+          "foundSpeedLimits": [],
+          "outCurrentTrackSpeedLimit": 3.3999999521443642e+38
+        }
+      }
+    },
+    {
+      "Path": "DriverAid.PlayerInfo",
+      "NodeValid": true,
+      "Values": {
+        "geoLocation": {
+          "longitude": 6.222358879199156,
+          "latitude": 51.11715501450251
+        },
+        "currentTile": {
+          "x": 1,
+          "y": 0
+        },
+        "playerProfileName": "Player",
+        "cameraMode": "FirstPerson_Driving",
+        "currentServiceName": "None"
+      }
+    }
+  ]
+}

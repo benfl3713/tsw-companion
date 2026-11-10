@@ -1,0 +1,207 @@
+{
+  "CurrentDrivableActor.Function.HUD_GetSpeed": {
+    "Result": "Success",
+    "Values": {
+      "Speed (ms)": 1.8295233249664307
+    }
+  },
+  "CurrentDrivableActor.Function.HUD_GetAcceleration": {
+    "Result": "Success",
+    "Values": {
+      "Acceleration (ms2)": 0.36327895522117615
+    }
+  },
+  "CurrentDrivableActor.ObjectClass": {
+    "Result": "Success",
+    "Values": {
+      "ObjectClass": "RVM_SEH_EWS_Class66_C"
+    }
+  },
+  "DriverAid.Data": {
+    "Result": "Success",
+    "Values": {
+      "signalSeen": false,
+      "speedLimitSeen": false,
+      "distanceToSignal": 0,
+      "distanceToNextSpeedLimit": 0,
+      "gradient": 0,
+      "signalAspectClass": "Clear",
+      "signalPropertyGuid": "00000000000000000000000000000000",
+      "bSignalIsPermissive": false,
+      "speedLimit": {
+        "value": 11.111111640930176
+      },
+      "nextSpeedLimit": {
+        "value": 0
+      },
+      "currentSpeedLimitSource": "TrackSpeedLimit",
+      "trackMaxSpeed": {
+        "value": 11.111111640930176
+      },
+      "serviceMaxSpeed": {
+        "value": 3.4028234663852886e+38
+      },
+      "formationMaxSpeed": {
+        "value": 3.4028234663852886e+38
+      },
+      "nextSignalPosition": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "nextSpeedLimitPosition": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "nextSpeedLimits": [],
+      "nextSignals": [],
+      "nextSignalProperty": {
+        "ribbonReference": "00000000000000000000000000000000",
+        "propertyReference": "00000000000000000000000000000000"
+      },
+      "trackRestrictionQuery": {
+        "maxSearchDistance": {
+          "value": 10000
+        },
+        "searchDirection": "Forwards",
+        "bWholeFormation": true,
+        "bUseOverrideAncillarySpeedClasses": false,
+        "maxReturnedSignals": 4,
+        "signalFlags": 7,
+        "maxReturnedSpeedLimits": 4,
+        "speedLimitFlags": 1,
+        "speedCurveQueries": [],
+        "speedCurveFlags": 515,
+        "overrideAncillarySpeedClasses": [],
+        "foundSignals": [],
+        "foundSpeedLimits": [],
+        "outCurrentTrackSpeedLimit": 3.3999999521443642e+38
+      }
+    }
+  },
+  "DriverAid.PlayerInfo": {
+    "Result": "Success",
+    "Values": {
+      "geoLocation": {
+        "longitude": 6.22370375782045,
+        "latitude": 51.1172328151928
+      },
+      "currentTile": {
+        "x": 1,
+        "y": 0
+      },
+      "playerProfileName": "Player",
+      "cameraMode": "FirstPerson_Driving",
+      "currentServiceName": "None"
+    }
+  },
+  "DriverAid.TrackData": {
+    "Result": "Success",
+    "Values": {
+      "lastPlayerPosition": {
+        "height": 8699.7294921875,
+        "distanceToHeight": 5871.1259765625,
+        "bTunnelFound": false
+      },
+      "trackHeights": [
+        {
+          "height": 8699.7294921875,
+          "distanceToHeight": 0,
+          "bTunnelFound": false
+        },
+        {
+          "height": 8699.7294921875,
+          "distanceToHeight": 5871.1259765625,
+          "bTunnelFound": false
+        },
+        {
+          "height": 8699.7294921875,
+          "distanceToHeight": 21332.626953125,
+          "bTunnelFound": false
+        },
+        {
+          "height": 8699.7294921875,
+          "distanceToHeight": 41962.8125,
+          "bTunnelFound": false
+        },
+        {
+          "height": 8699.7294921875,
+          "distanceToHeight": 63798.90234375,
+          "bTunnelFound": false
+        },
+        {
+          "height": 8699.7294921875,
+          "distanceToHeight": 80510.03125,
+          "bTunnelFound": false
+        },
+        {
+          "height": 8699.7294921875,
+          "distanceToHeight": 124476.140625,
+          "bTunnelFound": false
+        }
+      ],
+      "stations": [],
+      "markers": [
+        {
+          "stationName": "",
+          "distanceToStation": {
+            "x": 5871.1259765625,
+            "y": 8699.7294921875
+          },
+          "distanceToStationCM": 5832.7802734375,
+          "platformLength": 9000.2958984375,
+          "markerType": "Siding",
+          "markerName": "Central Depot Track 16"
+        }
+      ]
+    }
+  },
+  "TimeOfDay.Data": {
+    "Result": "Success",
+    "Values": {
+      "LocalTime": 639299017703333900,
+      "LocalTimeISO8601": "2026-11-10T10:02:50.333+01:00",
+      "GMTOffset": 1,
+      "WorldTime": 639298981703333900,
+      "WorldTimeISO8601": "2026-11-10T09:02:50.333Z",
+      "DayPercentage": 0.24688319861888885,
+      "SunriseTime": "+07:49:37.016",
+      "SolarNoonTime": "+12:19:25.474",
+      "SunsetTime": "+16:49:13.933",
+      "SunPositionAzimuth": 236.2821044921875,
+      "SunPositionAltitude": 15.477890014648438,
+      "MoonPositionAzimuth": 232.1591033935547,
+      "MoonPositionAltitude": 5.781641483306885,
+      "OriginLatitude": 51.11568832397461,
+      "OriginLongitude": 6.209702968597412,
+      "SystemTime": 639299172438100000,
+      "SystemTimeISO8601": "2026-11-10T14:20:43.810Z"
+    }
+  },
+  "WeatherManager.Data": {
+    "Result": "Success",
+    "Values": {
+      "Temperature": 7.900000095367432,
+      "TemperatureOveridden": 1,
+      "Cloudiness": 0.09000000357627869,
+      "CloudinessOveridden": 0,
+      "Precipitation": 0,
+      "PrecipitationOveridden": 0,
+      "Wetness": 0.004699999932199717,
+      "WetnessOveridden": 1,
+      "GroundSnow": 0,
+      "GroundSnowOveridden": 1,
+      "PiledSnow": 0,
+      "PiledSnowOveridden": 0,
+      "FogDensity": 0,
+      "FogDensityOveridden": 0
+    }
+  },
+  "CurrentFormation.FormationLength": {
+    "Result": "Success",
+    "Values": {
+      "FormationLength": 1
+    }
+  }
+}
