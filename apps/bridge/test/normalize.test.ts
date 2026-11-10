@@ -8,6 +8,7 @@ import {
   normalizeDriverAid,
   normalizePlayerInfo,
   normalizeTrackData,
+  onlyChanges,
   readField,
 } from "../src/telemetry/normalize.js";
 import { entriesByPath } from "../src/tsw/subscription.js";
@@ -106,13 +107,33 @@ describe("DriverAid.Data", () => {
     expect(aid.limits).toEqual([]);
   });
 
+  it("keeps only limits that change the speed (the game repeats one per track section)", () => {
+    const mk = (mph: number, distanceCm: number) => ({
+      value: { value: mph * 0.44704 },
+      distanceToNextSpeedLimit: distanceCm,
+      nextSpeedLimitPosition: { x: 0, y: 0, z: 0 },
+      restrictionType: "TrackPropertySpeedLimit",
+    });
+    const limits = normalizeDriverAid({
+      ...(samples["DriverAid.Data"].Values as DriverAidData),
+      speedLimit: { value: 20 * 0.44704 },
+      nextSpeedLimits: [mk(60, 4800), mk(60, 9000), mk(60, 11700), mk(40, 30000), mk(40, 40000), mk(60, 50000)],
+    }).limits;
+    expect(limits.map((l) => Math.round(l.limit! / 0.44704))).toEqual([60, 40, 60]);
+    expect(limits.map((l) => Math.round(l.distance))).toEqual([48, 300, 500]);
+  });
+
+  it("drops a first limit equal to the current one", () => {
+    expect(onlyChanges(10, [{ limit: 10 }, { limit: 15 }])).toEqual([{ limit: 15 }]);
+  });
+
   it("converts lookahead distances from cm and drops zero positions", () => {
     const withAhead = normalizeDriverAid({
       ...(samples["DriverAid.Data"].Values as DriverAidData),
       nextSignals: [{ value: "Clear", distanceToNextSignal: 24309.77, nextSignalPosition: { x: 0, y: 0, z: 0 } }],
       nextSpeedLimits: [
         {
-          value: { value: 11.11 },
+          value: { value: 22.22 }, // a change from the current 11.11
           distanceToNextSpeedLimit: 26766.5,
           nextSpeedLimitPosition: { x: -27253, y: -4349, z: 42210 },
           restrictionType: "TrackRuleSpeedLimit",

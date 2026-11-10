@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DriverAidState, DriveState, RecordedFeature, Telemetry } from "@tsw/shared";
-import { metresBetween, RouteRecorder } from "../src/route/recorder.js";
+import { metresBetween, pruneRepeatedLimits, RouteRecorder } from "../src/route/recorder.js";
 
 const M_PER_DEG_LAT = 111_320;
 
@@ -81,6 +81,27 @@ describe("RouteRecorder", () => {
       }),
     });
     expect(rec.all()).toHaveLength(0);
+  });
+
+  it("prunes repeated same-value limits recorded before filtering", () => {
+    const limitAt = (m: number, mph: number): RecordedFeature => ({
+      id: `l${m}`,
+      kind: "limit",
+      ...at(m),
+      bearing: 0,
+      limit: mph * 0.44704,
+      seen: 1,
+      lastSeen: "",
+    });
+    const pruned = pruneRepeatedLimits([
+      limitAt(0, 20),
+      limitAt(40, 20),
+      limitAt(80, 20),
+      limitAt(120, 20),
+      limitAt(300, 40),
+      limitAt(400, 20), // a real change back to 20 after the 40
+    ]);
+    expect(pruned.map((f) => f.id)).toEqual(["l0", "l300", "l400"]);
   });
 
   it("merges repeat passes instead of duplicating", () => {

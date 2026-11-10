@@ -40,6 +40,54 @@ function bearingDiff(a: number, b: number) {
   return d > 180 ? 360 - d : d;
 }
 
+/** Same-value limits facing the same way within this distance are one restriction. */
+const REPEAT_CHAIN_M = 500;
+
+/**
+ * Removes limits recorded before the bridge filtered out repeats: runs of the
+ * same value along the same direction collapse to the first one reached
+ * (the rearmost along the direction of travel), which is where it changes.
+ */
+export function pruneRepeatedLimits(features: RecordedFeature[]): RecordedFeature[] {
+  const limits = features.filter((f) => f.kind === "limit");
+  const drop = new Set<RecordedFeature>();
+  for (const f of limits) {
+    if (drop.has(f)) continue;
+    // Grow the chain of same-value, same-direction limits linked within REPEAT_CHAIN_M.
+    const chain = [f];
+    for (let i = 0; i < chain.length; i++) {
+      for (const g of limits) {
+        if (chain.includes(g) || drop.has(g)) continue;
+        const from = chain[i]!;
+        const gap = metresBetween(from, g);
+        if (
+          Math.abs((g.limit ?? 0) - (f.limit ?? 0)) < 0.05 &&
+          bearingDiff(g.bearing, f.bearing) < MAX_BEARING_DIFF &&
+          gap < REPEAT_CHAIN_M &&
+          // A different limit in between (60 → 40 → 60) makes the second 60 a real change.
+          !limits.some(
+            (h) =>
+              Math.abs((h.limit ?? 0) - (f.limit ?? 0)) >= 0.05 &&
+              bearingDiff(h.bearing, f.bearing) < MAX_BEARING_DIFF &&
+              metresBetween(from, h) < gap &&
+              metresBetween(h, g) < gap,
+          )
+        ) {
+          chain.push(g);
+        }
+      }
+    }
+    if (chain.length < 2) continue;
+    // Distance along the direction of travel; the smallest is reached first.
+    const rad = (f.bearing * Math.PI) / 180;
+    const along = (p: RecordedFeature) =>
+      (p.longitude - f.longitude) * Math.cos((f.latitude * Math.PI) / 180) * Math.sin(rad) + (p.latitude - f.latitude) * Math.cos(rad);
+    const first = chain.reduce((a, b) => (along(b) < along(a) ? b : a));
+    for (const c of chain) if (c !== first) drop.add(c);
+  }
+  return features.filter((f) => !drop.has(f));
+}
+
 export class RouteRecorder {
   private features: RecordedFeature[] = [];
   private pending: Pending[] = [];
@@ -59,7 +107,9 @@ export class RouteRecorder {
   ) {
     if (file && existsSync(file)) {
       try {
-        this.features = JSON.parse(readFileSync(file, "utf8")) as RecordedFeature[];
+        const loaded = JSON.parse(readFileSync(file, "utf8")) as RecordedFeature[];
+        this.features = pruneRepeatedLimits(loaded);
+        if (this.features.length !== loaded.length) this.save();
       } catch {
         // A corrupt file shouldn't stop the bridge; start fresh.
         this.features = [];

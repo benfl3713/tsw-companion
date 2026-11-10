@@ -98,13 +98,32 @@ export function normalizeDriverAid(d: DriverAidData): DriverAidState {
       distance: s.distanceToNextSignal * CM,
       position: position(s.nextSignalPosition),
     })),
-    limits: (d.nextSpeedLimits ?? []).map((l) => ({
-      limit: speed(l.value),
-      distance: l.distanceToNextSpeedLimit * CM,
-      position: position(l.nextSpeedLimitPosition),
-      type: l.restrictionType,
-    })),
+    limits: onlyChanges(
+      speed(d.speedLimit),
+      (d.nextSpeedLimits ?? []).map((l) => ({
+        limit: speed(l.value),
+        distance: l.distanceToNextSpeedLimit * CM,
+        position: position(l.nextSpeedLimitPosition),
+        type: l.restrictionType,
+      })),
+    ),
   };
+}
+
+/**
+ * The game lists a limit for every track section ahead, so the same value
+ * repeats many times (e.g. seventeen 60 mph entries in 2 km). Keep only the
+ * points where the limit actually changes from the one before.
+ */
+export function onlyChanges<T extends { limit: number | null }>(current: number | null, limits: T[]): T[] {
+  const out: T[] = [];
+  let previous = current;
+  for (const l of limits) {
+    // Limits are whole mph/km/h; compare loosely to ignore float noise.
+    if (previous == null || l.limit == null || Math.abs(l.limit - previous) > 0.05) out.push(l);
+    previous = l.limit;
+  }
+  return out;
 }
 
 export function normalizePlayerInfo(p: DriverAidPlayerInfo): PositionState {
