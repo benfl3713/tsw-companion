@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { PROFILES, type DriveState, type Telemetry } from "@tsw/shared";
 import { AnalogueEmu } from "./components/cab/AnalogueEmu";
+import { DesiroCity } from "./components/cab/DesiroCity";
 import { HitachiAt300 } from "./components/cab/HitachiAt300";
 import { SafetyAlerts } from "./components/cab/SafetyPanel";
 import {
@@ -201,6 +202,8 @@ export function App() {
         <main className="cab-view">
           {profile?.screen === "hitachi-at300" ? (
             <HitachiAt300 drive={d} values={t.cab?.values} unit={unit} dialMax={dial} limit={limit} target={target} />
+          ) : profile?.screen === "desiro-city" ? (
+            <DesiroCity drive={d} values={t.cab?.values} unit={unit} dialMax={dial} limit={limit} target={target} />
           ) : (
             <AnalogueEmu
               objectClass={t.loco?.objectClass ?? ""}

@@ -48,6 +48,7 @@ The **Map** view (switch in the top bar) shows the train's live position and hea
 The **Cab** view draws a cab display for the current loco from live values (the game's own screens can't be streamed). Profiles in `packages/shared/src/profiles.ts` choose the screen and the extra API paths it reads:
 
 - **Class 800/805**: Hitachi AT300-style display with traction/brake demand, MR/BP/BC pressures, status tiles and AWS/TPWS/DSD.
+- **Class 700/707**: Siemens Desiro City-style display with the same layout, plus AC/DC supply, pantograph, shoes, regenerative braking, brake hold and the PIS destination (when the game provides one as text).
 - **Class 465** and any other loco: analogue speedometer, duplex brake gauges, ammeter and engine RPM (shown once the loco reports them), plus AWS/TPWS/DSD where fitted.
 
 To add a loco, run `npm run probe` in its cab, find the values in `apps/bridge/dumps/<time>/current-drivable-actor.txt`, and add a profile.

@@ -105,8 +105,9 @@ export function runDemo(onUpdate: UpdateListener): () => void {
           mainRes: 8.6 + Math.sin(tick / 200) * 0.6,
           brakePipe: 5,
           brakeCylinder,
-          tractionTargetPct: Math.max(0, handle),
-          brakeTargetPct: Math.max(0, -handle),
+          // 0..1 fractions, as the game's *_Percentage nodes report.
+          tractionTargetPct: Math.max(0, handle) / 100,
+          brakeTargetPct: Math.max(0, -handle) / 100,
           powerNotch: 4,
           reverserNotch: 2,
           engineRunning: false,

@@ -11,7 +11,7 @@ export interface CabField {
   field?: string;
 }
 
-export type CabScreenId = "hitachi-at300" | "analogue-emu";
+export type CabScreenId = "hitachi-at300" | "desiro-city" | "analogue-emu";
 
 export interface LocoProfile {
   id: string;
@@ -79,6 +79,36 @@ export const PROFILES: LocoProfile[] = [
       brakeHoldSpeedReached: { path: `${CDA}.Property.bBrakeHoldSpeedReached` },
       tractionLocked: { path: `${CDA}/TractionLockManager.Property.bIsLocked` },
       displayPowered: { path: `${CDA}/DD_Service.Property.Powered` },
+    },
+  },
+  {
+    // Siemens Desiro City, dual voltage (25 kV AC pantograph / 750 V DC shoes).
+    id: "class700",
+    name: "Class 700 Desiro City",
+    match: "Class70[07]",
+    screen: "desiro-city",
+    fields: {
+      ...UK_SAFETY,
+      mainRes: { path: `${SIM}/MR (AirPipe).Pressure_BAR_G` },
+      brakePipe: { path: `${SIM}/BP (AirPipe).Pressure_BAR_G` },
+      brakeCylinder: { path: `${SIM}/BrakeCylinder_1_1.Pressure_BAR_G` },
+      tractionTargetPct: { path: `${SIM}/HUD_TE_Target_Percentage.Result` },
+      tractionPct: { path: `${SIM}/HUD_TE_Percentage.Result` },
+      wantAcMode: { path: `${SIM}/WantACMode.OutValue0` },
+      pantographUp: { path: `${CDA}/CurrentCollector_AC.Property.bDeployed` },
+      shoesDown: { path: `${CDA}/CurrentCollector_DC.Property.bDeployed` },
+      acSupply: { path: `${CDA}/CurrentCollector_AC.Property.bHasLocalSupply` },
+      dcSupply: { path: `${CDA}/CurrentCollector_DC.Property.bHasLocalSupply` },
+      acBreakerOpen: { path: `${CDA}/CurrentCollector_AC.Property.bCircuitBreakerOpen` },
+      dcBreakerOpen: { path: `${CDA}/CurrentCollector_DC.Property.bCircuitBreakerOpen` },
+      regenAc: { path: `${CDA}.Property.bRegenBrake_AC` },
+      regenDc: { path: `${CDA}.Property.bRegenBrake_DC` },
+      powerModeChanging: { path: `${CDA}.Property.bPowerModeChanging` },
+      brakeHoldSpeed: { path: `${CDA}.Property.bBrakeHoldSpeed` },
+      emergencyHold: { path: `${CDA}.Property.bEmergencyHold` },
+      batteryPower: { path: `${CDA}.Property.bBatteryPower` },
+      tractionLocked: { path: `${CDA}/TractionLockManager.Property.bIsLocked` },
+      destination: { path: `${CDA}/PIS_Manager.Property.FinalDestination` },
     },
   },
   {

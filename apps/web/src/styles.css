@@ -442,6 +442,34 @@ body,
   color: var(--at-text);
   min-height: 0;
 }
+/* Siemens: charcoal with teal accents. */
+.at-screen.theme-siemens {
+  --at-bg: #15181b;
+  --at-panel: #1f2428;
+  --at-line: #34404a;
+  --at-text: #e6eef0;
+}
+.theme-siemens .at-tile.on {
+  background: #2fc1b3;
+  border-color: #2fc1b3;
+  color: #0e1214;
+}
+.theme-siemens .at-pressure-fill {
+  background: #2fc1b3;
+}
+.theme-siemens .dial-track {
+  stroke: #2a3238;
+}
+.at-banner {
+  font-size: 18px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #000;
+  color: #ffb000;
+  font-family: ui-monospace, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
 .at-screen.at-off {
   display: grid;
   place-items: center;
