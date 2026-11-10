@@ -20,6 +20,8 @@ export interface Settings {
   urgentDecel: number;
   /** Fill the ETCS display's planning area from the game's lookahead (a real non-ETCS DMI leaves it blank). */
   dmiPlanning: boolean;
+  /** Stop the tablet dimming and locking while the app is open. */
+  keepAwake: boolean;
 }
 
 const ALL_ON: Record<AlertKey, boolean> = {
@@ -39,6 +41,7 @@ export const DEFAULT_SETTINGS: Settings = {
   comfortDecel: 0.45,
   urgentDecel: 0.8,
   dmiPlanning: true,
+  keepAwake: true,
 };
 
 const STORAGE_KEY = "tsw.settings";

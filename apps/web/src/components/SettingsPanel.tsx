@@ -27,11 +27,13 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (on: boolean) 
 interface Props {
   unit: SpeedUnit;
   sound: boolean;
+  /** Whether keep-awake is currently holding the screen on. */
+  awake: boolean;
   onToggleSound: () => void;
   onClose: () => void;
 }
 
-export function SettingsPanel({ unit, sound, onToggleSound, onClose }: Props) {
+export function SettingsPanel({ unit, sound, awake, onToggleSound, onClose }: Props) {
   const { settings, update, reset } = useSettings();
 
   return (
@@ -154,6 +156,32 @@ export function SettingsPanel({ unit, sound, onToggleSound, onClose }: Props) {
             </span>
           </div>
           <Toggle label="ETCS planning area" on={settings.dmiPlanning} onChange={(on) => update({ dmiPlanning: on })} />
+        </div>
+
+        <h2>This device</h2>
+        <div className="settings-row single">
+          <div className="col">
+            <span>Keep screen awake</span>
+            <span className="muted small">
+              {settings.keepAwake
+                ? awake
+                  ? "On: the screen won't dim while the app is open."
+                  : "Starts on your next tap."
+                : "The screen dims and locks as normal."}
+            </span>
+          </div>
+          <Toggle label="Keep screen awake" on={settings.keepAwake} onChange={(on) => update({ keepAwake: on })} />
+        </div>
+        <div className="settings-row single">
+          <div className="col">
+            <span>Full-screen app on iPad</span>
+            <span className="muted small">
+              In Safari, tap Share, then Add to Home Screen. Open TSW Cab from the home screen for a full-screen app.
+            </span>
+          </div>
+          <button className="unit-toggle" onClick={() => location.reload()}>
+            Reload
+          </button>
         </div>
 
         <footer className="sheet-foot">

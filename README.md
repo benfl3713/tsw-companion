@@ -39,7 +39,17 @@ npm run build   # once, and after UI changes
 npm start       # bridge serves the panel; scan the QR code it prints
 ```
 
-Open `http://<pc-ip>:31280/` on a tablet or phone on the same network. Add it to the home screen for fullscreen. If the tablet can't connect, allow Node.js through Windows Firewall on private networks.
+Open `http://<pc-ip>:31280/` on a tablet or phone on the same network. If the tablet can't connect, allow Node.js through Windows Firewall on private networks.
+
+### Full-screen app on iPad
+
+1. Open the address above in **Safari**.
+2. Tap **Share**, then **Add to Home Screen**. It appears as **TSW Cab**.
+3. Open it from the home screen. It runs full screen with no browser bars and stays on whichever view you left it on.
+
+It's a Progressive Web App: a manifest, home-screen icons (regenerate with `node apps/web/scripts/make-icons.mjs`) and iOS full-screen settings. While it's open the screen is kept awake from your first tap; turn this off in **Settings → This device**. Pages opened in a normal Safari tab get a full-screen button in the top bar instead.
+
+Two features only work over HTTPS or on the PC itself (`localhost`): the offline app shell (`sw.js`) and the Wake Lock API. Over plain LAN HTTP the app still installs and runs full screen, and keep-awake falls back to NoSleep.js, which works on iPad.
 
 For UI work, `npm run dev:web` runs Vite with hot reload on port 5173 and forwards telemetry to the bridge. `npm run demo` runs the bridge on a synthetic looping route (signals, limit changes, platforms) so you can work without the game.
 
