@@ -8,6 +8,7 @@ import {
   type DriverAidData,
   type DriverAidPlayerInfo,
   type DriverAidTrackData,
+  type ObjectiveState,
   type Telemetry,
 } from "@tsw/shared";
 import { findApiKey, TswClient } from "../tsw/client.js";
@@ -19,9 +20,11 @@ import {
   normalizeDriverAid,
   normalizePlayerInfo,
   normalizeTrackData,
+  parseObjectiveIndex,
+  firstValue,
   readField,
 } from "./normalize.js";
-import { DRIVE_FIELDS, DRIVE_PATHS, PATHS } from "./paths.js";
+import { DRIVE_FIELDS, DRIVE_PATHS, OBJECTIVE_PROPS, PATHS } from "./paths.js";
 
 export type UpdateListener = (update: Partial<Telemetry>) => void;
 
@@ -30,7 +33,7 @@ interface Tier {
   set: SubscriptionSet;
   /** Minimum time between reads; 0 = back to back (one per game tick). */
   intervalMs: number;
-  handle: (values: SubscriptionValues) => void;
+  handle: (values: SubscriptionValues) => void | Promise<void>;
   reads: number;
 }
 
@@ -97,7 +100,7 @@ export class TelemetryLoop {
       };
       this.setConnection(connection);
       await this.stream(client, connection);
-      this.onUpdate({ loco: null, drive: null, driverAid: null, position: null, track: null, cab: null });
+      this.onUpdate({ loco: null, drive: null, driverAid: null, position: null, track: null, cab: null, objective: null });
       this.log("Lost connection to the game.");
     }
   }
@@ -133,7 +136,7 @@ export class TelemetryLoop {
       try {
         const values = await tier.set.read();
         if (generation !== this.generation) return "restart";
-        tier.handle(values);
+        await tier.handle(values);
         tier.reads++;
         errors = 0;
       } catch {
@@ -146,6 +149,25 @@ export class TelemetryLoop {
       if (wait > 0) await sleep(wait);
     }
     return "stopped";
+  }
+
+  /** One GET per property, all in flight together (one game tick). Missing ones read null. */
+  private async readObjective(client: TswClient, index: number): Promise<ObjectiveState> {
+    const entries = await Promise.all(
+      Object.entries(OBJECTIVE_PROPS).map(async ([key, prop]) => {
+        const res = await client.get(`Objectives/${index}.${prop}`).catch(() => undefined);
+        return [key, res?.Result === "Success" ? firstValue(res.Values) : null] as const;
+      }),
+    );
+    const v = Object.fromEntries(entries) as Record<keyof typeof OBJECTIVE_PROPS, unknown>;
+    return {
+      index,
+      kind: typeof v.kind === "string" ? v.kind.replace(/^ObjectiveAction_|BP_C$|_C$/g, "") : "",
+      waitTime: clean(v.waitTime),
+      currentWaitTime: clean(v.currentWaitTime),
+      waitForDoorOpen: v.waitForDoorOpen === true,
+      waitForDoorClosed: v.waitForDoorClosed === true,
+    };
   }
 
   private createTiers(client: TswClient, connection: ConnectionState): Tier[] {
@@ -216,13 +238,16 @@ export class TelemetryLoop {
           PATHS.timeOfDay,
           PATHS.weather,
           PATHS.formationLength,
+          PATHS.currentObjective,
         ]),
         intervalMs: 1000,
         reads: 0,
-        handle: (values) => {
+        handle: async (values) => {
           const time = values.get(PATHS.timeOfDay);
           const weather = values.get(PATHS.weather);
+          const objectiveIndex = parseObjectiveIndex(values.get(PATHS.currentObjective));
           this.onUpdate({
+            objective: objectiveIndex == null ? null : await this.readObjective(client, objectiveIndex),
             loco: this.objectClass
               ? { objectClass: this.objectClass, formationLength: firstNumber(values.get(PATHS.formationLength)) }
               : null,

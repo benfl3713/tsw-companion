@@ -128,6 +128,22 @@ export interface Telemetry {
   world: WorldState | null;
   /** Extra values for the current loco's cab screen, if it has a profile. */
   cab: CabState | null;
+  /** The current service objective (dwell timers etc.), when on a service. */
+  objective: ObjectiveState | null;
+}
+
+/**
+ * The active objective of a service. The API can't serialise scheduled
+ * times (they come back as {}), so only timers and door waits are here.
+ */
+export interface ObjectiveState {
+  index: number;
+  kind: string;
+  /** Seconds; null when the objective has no wait. */
+  waitTime: number | null;
+  currentWaitTime: number | null;
+  waitForDoorOpen: boolean;
+  waitForDoorClosed: boolean;
 }
 
 export type CabValue = number | boolean | string | null;
@@ -138,6 +154,7 @@ export interface CabState {
 }
 
 export * from "./profiles.js";
+export * from "./braking.js";
 
 export type ConnectionStatus = "no-key" | "waiting-for-game" | "connected" | "no-train";
 

@@ -53,6 +53,15 @@ The **Cab** view draws a cab display for the current loco from live values (the 
 
 To add a loco, run `npm run probe` in its cab, find the values in `apps/bridge/dumps/<time>/current-drivable-actor.txt`, and add a profile.
 
+**Alerts** appear under the top bar in every view:
+- AWS, vigilance/DSD, brake demand and wheelslip warnings.
+- Overspeed against the current limit.
+- **Braking advice** for the next lower limit or red signal: "Brake in …" shortly before the point where service braking (0.45 m/s²) must start, "BRAKE" once past it, and "BRAKE HARD" when more than 0.8 m/s² is needed. Tuning is in `packages/shared/src/braking.ts`.
+
+Tap **Sound off** in the top bar to enable alert tones on the tablet (browsers only allow sound after a tap, so you may need to tap it again after reloading).
+
+On a service, the **Service** card shows the service name, the dwell countdown at stops and door instructions. The API returns timetable times as empty values, so early/late running isn't available.
+
 The **Ahead** column shows the next signals, limit changes and platforms on a log scale (tap the range button for 2 / 5 / 10 km), with the permitted speed profile on the left. The game returns at most 4 signals and 4 limits within 10 km.
 
 ## Layout

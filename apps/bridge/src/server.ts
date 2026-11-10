@@ -60,6 +60,7 @@ export function emptyTelemetry(): Telemetry {
     track: null,
     world: null,
     cab: null,
+    objective: null,
   };
 }
 

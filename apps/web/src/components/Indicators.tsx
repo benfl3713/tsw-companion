@@ -1,4 +1,4 @@
-import type { UpcomingLimit, UpcomingSignal } from "@tsw/shared";
+import type { ObjectiveState, UpcomingLimit, UpcomingSignal } from "@tsw/shared";
 import { formatDistance, limitIn, type SpeedUnit } from "../units";
 
 /** Rough colour class for the HUD's aspect names. Unknown names show as text only. */
@@ -70,6 +70,40 @@ export function NextStop({ name, distance, unit }: { name: string; distance: num
       <div className="col">
         <span className="stop-name">{name}</span>
         <span className="distance">{formatDistance(distance, unit)}</span>
+      </div>
+    </section>
+  );
+}
+
+function formatSeconds(s: number) {
+  const m = Math.floor(s / 60);
+  return `${m}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+}
+
+/**
+ * Service name and the current objective's dwell countdown and door waits.
+ * The API doesn't expose timetable times, so there's no early/late here.
+ */
+export function ServiceCard({ serviceName, objective }: { serviceName: string | null; objective: ObjectiveState | null }) {
+  if (!serviceName && !objective) return null;
+  const waiting = objective?.waitTime != null && objective.waitTime > 0;
+  const remaining = waiting ? Math.max(0, objective!.waitTime! - (objective!.currentWaitTime ?? 0)) : null;
+  return (
+    <section className="card">
+      <h2>Service</h2>
+      <div className="col">
+        {serviceName && <span className="stop-name">{serviceName}</span>}
+        {remaining != null && (
+          <span className="distance">
+            Dwell {formatSeconds(remaining)}
+            {remaining === 0 && <span className="ok-text"> · Ready to depart</span>}
+          </span>
+        )}
+        {objective?.waitForDoorOpen && <span className="warn">Open the doors</span>}
+        {objective?.waitForDoorClosed && <span className="warn">Close the doors</span>}
+        {objective && !waiting && !objective.waitForDoorOpen && !objective.waitForDoorClosed && objective.kind && (
+          <span className="muted small">Objective: {objective.kind.replace(/([a-z])([A-Z])/g, "$1 $2")}</span>
+        )}
       </div>
     </section>
   );

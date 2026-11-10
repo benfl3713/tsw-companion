@@ -3,7 +3,8 @@ import { PROFILES, type DriveState, type Telemetry } from "@tsw/shared";
 import { AnalogueEmu } from "./components/cab/AnalogueEmu";
 import { DesiroCity } from "./components/cab/DesiroCity";
 import { HitachiAt300 } from "./components/cab/HitachiAt300";
-import { SafetyAlerts } from "./components/cab/SafetyPanel";
+import { Alerts } from "./components/Alerts";
+import { useSound } from "./audio";
 import {
   aspectColour,
   Bar,
@@ -13,6 +14,7 @@ import {
   NextLimit,
   NextSignal,
   NextStop,
+  ServiceCard,
 } from "./components/Indicators";
 import { RouteMap } from "./components/RouteMap";
 import { dialMax, Speedometer } from "./components/Speedometer";
@@ -141,6 +143,7 @@ export function App() {
   const state = useTelemetry();
   const [unit, toggleUnit] = useSpeedUnit();
   const [view, setView] = useView();
+  const [sound, toggleSound] = useSound();
   const t: Telemetry = state.data;
   const ranges = useSeenRanges(t.loco?.objectClass, t.drive);
 
@@ -161,6 +164,9 @@ export function App() {
       <span className="muted small" title="Drive updates per second">
         {state.driveHz} Hz
       </span>
+      <button className={`unit-toggle ${sound ? "" : "off"}`} onClick={toggleSound} title="Alert sounds">
+        {sound ? "Sound on" : "Sound off"}
+      </button>
       <button className="unit-toggle" onClick={toggleUnit}>
         {UNIT_LABEL[unit]}
       </button>
@@ -194,9 +200,9 @@ export function App() {
   return (
     <div className="app">
       {header}
-      {d.alerter ? <div className="alert vigilance">VIGILANCE: acknowledge</div> : null}
-      {d.isSlipping ? <div className="alert slip">WHEELSLIP</div> : null}
-      <SafetyAlerts values={t.cab?.values} />
+      <div className="alerts">
+        <Alerts t={t} unit={unit} sound={sound} />
+      </div>
 
       {view === "cab" && (
         <main className="cab-view">
@@ -275,6 +281,8 @@ export function App() {
             )}
           </div>
           {nextStop && <Gradient gradient={aid?.gradient ?? 0} />}
+          <ServiceCard serviceName={t.position?.serviceName ?? null} objective={t.objective} />
+
 
           <section className="card controls">
             <h2>Controls</h2>

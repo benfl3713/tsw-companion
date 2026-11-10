@@ -105,6 +105,37 @@ body,
   background: var(--yellow);
   color: #000;
 }
+.alert.overspeed {
+  background: var(--bad);
+}
+.alert.advice {
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  padding: 8px;
+}
+.alert.advice.approach {
+  background: #3a2f12;
+  color: var(--yellow);
+}
+.alert.advice.brake {
+  background: var(--accent);
+  color: #111;
+}
+.alert.advice.urgent {
+  background: var(--bad);
+  animation: flash 0.6s steps(2) infinite;
+}
+.alerts {
+  display: flex;
+  flex-direction: column;
+}
+.unit-toggle.off {
+  color: var(--muted);
+}
+.ok-text {
+  color: var(--ok);
+  font-size: 15px;
+}
 @keyframes flash {
   50% {
     opacity: 0.35;

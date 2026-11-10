@@ -47,4 +47,14 @@ export const PATHS = {
   trackData: "DriverAid.TrackData",
   timeOfDay: "TimeOfDay.Data",
   weather: "WeatherManager.Data",
+  currentObjective: "Objectives.Current",
+} as const;
+
+/** Read per objective with plain GETs, since the index changes as the service runs. */
+export const OBJECTIVE_PROPS = {
+  kind: "ObjectClass",
+  waitTime: "Property.WaitTime",
+  currentWaitTime: "Property.CurrentWaitTime",
+  waitForDoorOpen: "Property.bWaitForDoorOpen",
+  waitForDoorClosed: "Property.bWaitForDoorClosed",
 } as const;

@@ -65,6 +65,13 @@ export function cabValue(v: unknown): number | boolean | string | null {
   return null;
 }
 
+/** Objectives.Current gives e.g. { Current: "2" } or {} when nothing is active. */
+export function parseObjectiveIndex(values: Record<string, unknown> | undefined): number | null {
+  const v = firstValue(values);
+  const n = typeof v === "number" ? v : typeof v === "string" ? parseInt(v, 10) : NaN;
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
+
 export function firstNumber(values: Record<string, unknown> | undefined): number | null {
   const v = firstValue(values);
   if (typeof v === "boolean") return v ? 1 : 0;

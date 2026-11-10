@@ -47,15 +47,3 @@ export function SafetyPanel({ values }: { values: Record<string, CabValue> | und
     </div>
   );
 }
-
-/** Full-width warnings that need the driver to act. */
-export function SafetyAlerts({ values }: { values: Record<string, CabValue> | undefined }) {
-  if (!values) return null;
-  return (
-    <>
-      {on(values.awsWarning) && <div className="alert vigilance">AWS: acknowledge</div>}
-      {on(values.dsdWarning) && <div className="alert vigilance">DSD: reset vigilance</div>}
-      {(on(values.safetyBrakeDemand) || on(values.dsdPenalty)) && <div className="alert vigilance">BRAKE DEMAND</div>}
-    </>
-  );
-}

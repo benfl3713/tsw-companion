@@ -161,6 +161,15 @@ export function runDemo(onUpdate: UpdateListener): () => void {
         })).sort((a, b) => a.distance - b.distance),
         heights: [],
       },
+      // A dwell countdown that loops every 90 s.
+      objective: {
+        index: 3,
+        kind: "Wait",
+        waitTime: 60,
+        currentWaitTime: Math.min(60, (tick / 30) % 90),
+        waitForDoorOpen: false,
+        waitForDoorClosed: (tick / 30) % 90 > 60,
+      },
       world: {
         localTimeIso: new Date().toISOString(),
         gmtOffset: 0,

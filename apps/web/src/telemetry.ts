@@ -19,6 +19,7 @@ const EMPTY: Telemetry = {
   track: null,
   world: null,
   cab: null,
+  objective: null,
 };
 
 /** Don't extrapolate further than this past the last sample. */
