@@ -5,6 +5,7 @@ import { DesiroCity } from "./components/cab/DesiroCity";
 import { HitachiAt300 } from "./components/cab/HitachiAt300";
 import { Alerts } from "./components/Alerts";
 import { useSound } from "./audio";
+import { SettingsPanel } from "./components/SettingsPanel";
 import {
   aspectColour,
   Bar,
@@ -144,6 +145,7 @@ export function App() {
   const [unit, toggleUnit] = useSpeedUnit();
   const [view, setView] = useView();
   const [sound, toggleSound] = useSound();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const t: Telemetry = state.data;
   const ranges = useSeenRanges(t.loco?.objectClass, t.drive);
 
@@ -170,6 +172,12 @@ export function App() {
       <button className="unit-toggle" onClick={toggleUnit}>
         {UNIT_LABEL[unit]}
       </button>
+      <button className="unit-toggle icon" onClick={() => setSettingsOpen(true)} aria-label="Settings" title="Settings">
+        ⚙
+      </button>
+      {settingsOpen && (
+        <SettingsPanel unit={unit} sound={sound} onToggleSound={toggleSound} onClose={() => setSettingsOpen(false)} />
+      )}
     </header>
   );
 
