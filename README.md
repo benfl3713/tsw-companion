@@ -32,7 +32,19 @@ npm start
 
 Reads are grouped into three subscriptions: drive values (every game tick, about 30 Hz), signals, limits and position (10 Hz), and track, time and weather (1 Hz).
 
+## Driver panel (web app)
+
+```bash
+npm run build   # once, and after UI changes
+npm start       # bridge serves the panel; scan the QR code it prints
+```
+
+Open `http://<pc-ip>:31280/` on a tablet or phone on the same network. Add it to the home screen for fullscreen. If the tablet can't connect, allow Node.js through Windows Firewall on private networks.
+
+For UI work, `npm run dev:web` runs Vite with hot reload on port 5173 and forwards telemetry to the bridge.
+
 ## Layout
 
 - `packages/shared`: API response types shared by bridge and web app
 - `apps/bridge`: Node service on the gaming PC that talks to the TSW API (`src/tsw/client.ts`)
+- `apps/web`: React driver panel for tablets and phones

@@ -1,9 +1,54 @@
-import { createServer, type Server } from "node:http";
+import { readFile } from "node:fs/promises";
+import { createServer, type ServerResponse, type Server } from "node:http";
 import { networkInterfaces } from "node:os";
+import { extname, join, normalize, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { ServerMessage, Telemetry } from "@tsw/shared";
 import { WebSocketServer, WebSocket } from "ws";
 
 export const DEFAULT_PORT = 31280;
+
+/** Built web app (npm run build -w @tsw/web). */
+export const WEB_DIST = resolve(fileURLToPath(new URL("../../web/dist", import.meta.url)));
+
+const MIME: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "text/javascript",
+  ".css": "text/css",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".json": "application/json",
+  ".webmanifest": "application/manifest+json",
+};
+
+async function serveStatic(urlPath: string, res: ServerResponse) {
+  const rel = normalize(decodeURIComponent(urlPath.split("?")[0] ?? "/")).replace(/^[\\/]+/, "");
+  let file = join(WEB_DIST, rel || "index.html");
+  if (!file.startsWith(WEB_DIST + sep) && file !== WEB_DIST) {
+    res.writeHead(403).end();
+    return;
+  }
+  let body: Buffer;
+  try {
+    body = await readFile(file);
+  } catch {
+    // Unknown paths fall back to the app shell.
+    file = join(WEB_DIST, "index.html");
+    try {
+      body = await readFile(file);
+    } catch {
+      res.writeHead(503, { "content-type": "text/plain" });
+      res.end("Web app not built yet. Run: npm run build -w @tsw/web");
+      return;
+    }
+  }
+  const hashed = file.includes(`${sep}assets${sep}`);
+  res.writeHead(200, {
+    "content-type": MIME[extname(file)] ?? "application/octet-stream",
+    "cache-control": hashed ? "public, max-age=31536000, immutable" : "no-cache",
+  });
+  res.end(body);
+}
 
 export function emptyTelemetry(): Telemetry {
   return {
@@ -34,7 +79,7 @@ export class TelemetryServer {
         res.end(JSON.stringify(this.state));
         return;
       }
-      res.writeHead(404).end();
+      void serveStatic(req.url ?? "/", res);
     });
 
     this.wss = new WebSocketServer({ server: this.http, path: "/ws" });
