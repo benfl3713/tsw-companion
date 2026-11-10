@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { DriverAidState, TrackState } from "@tsw/shared";
 import { store } from "../telemetry";
-import { formatDistance, limitIn, type SpeedUnit } from "../units";
+import { formatDistance, limitIn, UNIT_LABEL, type SpeedUnit } from "../units";
 import { aspectColour } from "./Indicators";
 
 const RANGES = [2000, 5000, 10000] as const;
@@ -10,7 +10,7 @@ const RANGE_KEY = "tsw.stripRange";
 
 const WIDTH = 220;
 const TOP_PAD = 16;
-const BOTTOM_PAD = 36;
+const BOTTOM_PAD = 52;
 const TRACK_X = 110;
 
 function readRange(): Range {
@@ -64,6 +64,7 @@ export function UpcomingStrip({ driverAid, track, unit }: Props) {
   const [wrap, height] = useHeight<HTMLDivElement>();
   const now = useFrameTime();
   const travelled = store.travelledSinceLookahead(now);
+  const currentLimit = limitIn(driverAid?.speedLimit, unit);
 
   const cycleRange = () => {
     const next = RANGES[(RANGES.indexOf(range) + 1) % RANGES.length]!;
@@ -179,9 +180,17 @@ export function UpcomingStrip({ driverAid, track, unit }: Props) {
             );
           })}
 
-          {/* The train */}
+          {/* The train, with the limit it's running under as a pill beneath it */}
           <path d={`M ${TRACK_X} ${bottom - 12} l 8 14 h -16 z`} className="strip-train" />
-          <text x={TRACK_X} y={bottom + 24} className="strip-tick" textAnchor="middle">
+          {currentLimit != null && (
+            <g aria-label={`Current limit ${currentLimit} ${UNIT_LABEL[unit]}`}>
+              <rect x={TRACK_X - 24} y={bottom + 6} width={48} height={22} rx={11} className="strip-current-pill" />
+              <text x={TRACK_X} y={bottom + 17} className="strip-current-text" textAnchor="middle" dominantBaseline="central">
+                {currentLimit}
+              </text>
+            </g>
+          )}
+          <text x={TRACK_X} y={bottom + 44} className="strip-tick" textAnchor="middle">
             {signals.length === 0 && limits.length === 0 ? "No signals or limits ahead" : ""}
           </text>
         </svg>

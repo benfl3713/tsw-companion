@@ -1218,6 +1218,17 @@ textarea {
 .strip-aspect.green {
   fill: var(--ok);
 }
+.strip-current-pill {
+  fill: #fff;
+  stroke: var(--bad);
+  stroke-width: 2.5;
+}
+.strip-current-text {
+  fill: #000;
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
 .strip-train {
   fill: var(--accent);
 }
