@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "port": 31280
+    },
+    {
+      "name": "bridge-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--", "--demo", "--port", "31281"],
+      "port": 31281
     }
   ]
 }

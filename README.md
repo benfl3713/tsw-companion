@@ -41,7 +41,9 @@ npm start       # bridge serves the panel; scan the QR code it prints
 
 Open `http://<pc-ip>:31280/` on a tablet or phone on the same network. Add it to the home screen for fullscreen. If the tablet can't connect, allow Node.js through Windows Firewall on private networks.
 
-For UI work, `npm run dev:web` runs Vite with hot reload on port 5173 and forwards telemetry to the bridge.
+For UI work, `npm run dev:web` runs Vite with hot reload on port 5173 and forwards telemetry to the bridge. `npm run demo` runs the bridge on a synthetic looping route (signals, limit changes, platforms) so you can work without the game.
+
+The **Ahead** column shows the next signals, limit changes and platforms on a log scale (tap the range button for 2 / 5 / 10 km), with the permitted speed profile on the left. The game returns at most 4 signals and 4 limits within 10 km.
 
 ## Layout
 

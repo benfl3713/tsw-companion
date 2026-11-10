@@ -168,11 +168,14 @@ export class TelemetryLoop {
         },
       },
       {
-        name: "driverAid",
+        name: "lookahead",
+        // Track data rides along here: a read costs one tick whatever its size,
+        // and the upcoming strip wants platforms as fresh as signals.
         set: new SubscriptionSet(client, BASE_SUBSCRIPTION_ID + 1, [
           PATHS.objectClass,
           PATHS.driverAid,
           PATHS.playerInfo,
+          PATHS.trackData,
         ]),
         intervalMs: 100,
         reads: 0,
@@ -191,16 +194,17 @@ export class TelemetryLoop {
 
           const aid = values.get(PATHS.driverAid) as DriverAidData | undefined;
           const player = values.get(PATHS.playerInfo) as DriverAidPlayerInfo | undefined;
+          const track = values.get(PATHS.trackData) as DriverAidTrackData | undefined;
           this.onUpdate({
             driverAid: aid && objectClass ? normalizeDriverAid(aid) : null,
             position: player?.geoLocation ? normalizePlayerInfo(player) : null,
+            track: track && objectClass ? normalizeTrackData(track) : null,
           });
         },
       },
       {
         name: "world",
         set: new SubscriptionSet(client, BASE_SUBSCRIPTION_ID + 2, [
-          PATHS.trackData,
           PATHS.timeOfDay,
           PATHS.weather,
           PATHS.formationLength,
@@ -208,14 +212,12 @@ export class TelemetryLoop {
         intervalMs: 1000,
         reads: 0,
         handle: (values) => {
-          const track = values.get(PATHS.trackData) as DriverAidTrackData | undefined;
           const time = values.get(PATHS.timeOfDay);
           const weather = values.get(PATHS.weather);
           this.onUpdate({
             loco: this.objectClass
               ? { objectClass: this.objectClass, formationLength: firstNumber(values.get(PATHS.formationLength)) }
               : null,
-            track: track && this.objectClass ? normalizeTrackData(track) : null,
             world: time
               ? {
                   localTimeIso: String(time.LocalTimeISO8601),

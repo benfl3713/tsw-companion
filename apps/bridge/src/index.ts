@@ -1,12 +1,13 @@
 // Bridge entry point: streams TSW telemetry to companion clients over WebSocket.
 //
-//   npm start -- [--port 31280] [--key <key>] [--url http://localhost:31270]
+//   npm start -- [--port 31280] [--key <key>] [--url http://localhost:31270] [--demo]
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import qrcode from "qrcode-terminal";
 import { DEFAULT_BASE_URL } from "./tsw/client.js";
+import { runDemo } from "./telemetry/demo.js";
 import { TelemetryLoop } from "./telemetry/loop.js";
 import { DEFAULT_PORT, lanAddresses, TelemetryServer, WEB_DIST } from "./server.js";
 
@@ -15,6 +16,7 @@ const { values: args } = parseArgs({
     port: { type: "string", default: String(DEFAULT_PORT) },
     key: { type: "string" },
     url: { type: "string", default: DEFAULT_BASE_URL },
+    demo: { type: "boolean", default: false },
   },
 });
 
@@ -34,14 +36,19 @@ if (!existsSync(join(WEB_DIST, "index.html"))) {
   qrcode.generate(best, { small: true });
 }
 
-const loop = new TelemetryLoop((update) => server.update(update), { key: args.key, baseUrl: args.url });
-
 const shutdown = () => {
-  loop.stop();
+  loop?.stop();
   server.close();
   process.exit(0);
 };
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-await loop.run();
+let loop: TelemetryLoop | undefined;
+if (args.demo) {
+  console.log("\nDemo mode: streaming a synthetic route, not the game.");
+  runDemo((update) => server.update(update));
+} else {
+  loop = new TelemetryLoop((update) => server.update(update), { key: args.key, baseUrl: args.url });
+  await loop.run();
+}

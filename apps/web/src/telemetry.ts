@@ -33,6 +33,10 @@ class TelemetryStore {
   private listeners = new Set<() => void>();
   private driveCount = 0;
   private lastSpeed = { speed: 0, acceleration: 0, at: 0 };
+  /** Metres travelled, integrated from speed samples; only differences matter. */
+  private odometer = 0;
+  /** Odometer reading when the current lookahead (driverAid/track) arrived. */
+  private lookaheadOdometer = 0;
   private retryMs = 500;
 
   constructor(private readonly url: string) {
@@ -59,13 +63,16 @@ class TelemetryStore {
       const msg = JSON.parse(event.data as string) as ServerMessage;
       const data = msg.type === "snapshot" ? msg.data : { ...this.state.data, ...msg.data };
       if (msg.data.drive) {
+        const now = performance.now();
+        this.odometer = this.odometerAt(now);
         this.driveCount++;
         this.lastSpeed = {
           speed: msg.data.drive.speed ?? 0,
           acceleration: msg.data.drive.acceleration ?? 0,
-          at: performance.now(),
+          at: now,
         };
       }
+      if (msg.data.driverAid || msg.data.track) this.lookaheadOdometer = this.odometerAt(performance.now());
       this.set({ data });
     };
   }
@@ -86,6 +93,22 @@ class TelemetryStore {
   speedAt(now: number): number {
     const dt = Math.min((now - this.lastSpeed.at) / 1000, MAX_EXTRAPOLATION_S);
     return Math.max(0, this.lastSpeed.speed + this.lastSpeed.acceleration * dt);
+  }
+
+  private odometerAt(now: number): number {
+    if (!this.lastSpeed.at) return this.odometer;
+    // Trapezoid between the last sample and the extrapolated speed now.
+    // Cap so a paused game or stalled link doesn't keep "moving" the train.
+    const dt = Math.min(Math.max(0, (now - this.lastSpeed.at) / 1000), 0.25);
+    return this.odometer + ((this.lastSpeed.speed + this.speedAt(now)) / 2) * dt;
+  }
+
+  /**
+   * Metres travelled since the lookahead was sampled. Subtract from upcoming
+   * distances so items glide between 10 Hz updates instead of jumping.
+   */
+  travelledSinceLookahead(now: number): number {
+    return Math.max(0, this.odometerAt(now) - this.lookaheadOdometer);
   }
 }
 

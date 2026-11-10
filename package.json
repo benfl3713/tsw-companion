@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "start": "npm start -w @tsw/bridge --",
+    "demo": "npm start -w @tsw/bridge -- --demo",
     "probe": "npm run probe -w @tsw/bridge --",
     "watch": "npm run watch -w @tsw/bridge --",
     "test": "npm test -w @tsw/bridge",

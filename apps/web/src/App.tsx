@@ -2,6 +2,7 @@ import { useRef } from "react";
 import type { DriveState, Telemetry } from "@tsw/shared";
 import { Bar, CurrentLimit, Gradient, NextLimit, NextSignal, NextStop } from "./components/Indicators";
 import { dialMax, Speedometer } from "./components/Speedometer";
+import { UpcomingStrip } from "./components/UpcomingStrip";
 import { useTelemetry, type StoreState } from "./telemetry";
 import { limitIn, toUnit, UNIT_LABEL, useSpeedUnit } from "./units";
 
@@ -156,6 +157,8 @@ export function App() {
             )}
           </section>
         </section>
+
+        <UpcomingStrip driverAid={aid} track={t.track} unit={unit} />
       </main>
     </div>
   );
