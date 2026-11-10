@@ -1,6 +1,7 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import {
   findProfile,
+  resolveProfile,
   profilePaths,
   type CabValue,
   type ConnectionState,
@@ -109,7 +110,11 @@ export class TelemetryLoop {
   private async stream(client: TswClient, connection: ConnectionState): Promise<void> {
     while (!this.stopped) {
       const generation = ++this.generation;
-      const tiers = this.createTiers(client, connection);
+      // Loco-specific component names (e.g. its AWS/TPWS service) for the cab profile.
+      const nodeNames = this.objectClass
+        ? ((await client.list("CurrentDrivableActor").catch(() => undefined))?.Nodes ?? []).map((n) => n.Name ?? n.NodeName ?? "")
+        : [];
+      const tiers = this.createTiers(client, connection, nodeNames);
       for (const tier of tiers) await tier.set.create();
 
       const stats = setInterval(() => {
@@ -170,11 +175,12 @@ export class TelemetryLoop {
     };
   }
 
-  private createTiers(client: TswClient, connection: ConnectionState): Tier[] {
+  private createTiers(client: TswClient, connection: ConnectionState, nodeNames: string[]): Tier[] {
     const driveFields = Object.entries(DRIVE_FIELDS) as [keyof DriveState, (typeof DRIVE_FIELDS)[keyof DriveState]][];
     let trainPresent: boolean | null = null;
     // The cab tier depends on the loco, which we only learn from the first read.
-    const profile = findProfile(this.objectClass);
+    const matched = findProfile(this.objectClass);
+    const profile = matched && resolveProfile(matched, nodeNames);
 
     const tiers: Tier[] = [
       {

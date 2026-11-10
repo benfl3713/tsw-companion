@@ -20,6 +20,7 @@ const { values: args } = parseArgs({
     key: { type: "string" },
     url: { type: "string", default: DEFAULT_BASE_URL },
     demo: { type: "boolean", default: false },
+    loco: { type: "string", default: "Class805" },
   },
 });
 
@@ -63,7 +64,7 @@ process.on("SIGTERM", shutdown);
 let loop: TelemetryLoop | undefined;
 if (args.demo) {
   console.log("Demo mode: streaming a synthetic route, not the game.");
-  runDemo(publish);
+  runDemo(publish, args.loco);
 } else {
   loop = new TelemetryLoop(publish, { key: args.key, baseUrl: args.url });
   await loop.run();

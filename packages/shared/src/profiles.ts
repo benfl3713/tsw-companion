@@ -11,7 +11,7 @@ export interface CabField {
   field?: string;
 }
 
-export type CabScreenId = "hitachi-at300" | "desiro-city" | "analogue-emu";
+export type CabScreenId = "hitachi-at300" | "desiro-city" | "electrostar" | "analogue-emu";
 
 export interface LocoProfile {
   id: string;
@@ -25,43 +25,56 @@ export interface LocoProfile {
 const CDA = "CurrentDrivableActor";
 const SIM = `${CDA}/Simulation`;
 
-/** AWS/TPWS/DSD on UK stock. Component names vary between locos. */
-const UK_SAFETY: Record<string, CabField> = {
-  awsSunflower: {
-    path: [`${CDA}/AWS_TPWS_Service.Function.GetAWS_SunflowerState`, `${CDA}/BP_AWS_TPWS_Service.Function.GetAWS_SunflowerState`],
-    field: "CurrentState",
-  },
-  awsWarning: {
-    path: [`${CDA}/AWS_TPWS_Service.Property.AWS_WarningState`, `${CDA}/BP_AWS_TPWS_Service.Property.AWS_WarningState`],
-  },
-  tpwsTrainStop: {
-    path: [`${CDA}/AWS_TPWS_Service.Function.GetTPWS_TrainStopIndicator`, `${CDA}/BP_AWS_TPWS_Service.Function.GetTPWS_TrainStopIndicator`],
-    field: "bIsOn",
-  },
-  tpwsTrainStopFlashing: {
-    path: [`${CDA}/AWS_TPWS_Service.Function.GetTPWS_TrainStopIndicator`, `${CDA}/BP_AWS_TPWS_Service.Function.GetTPWS_TrainStopIndicator`],
-    field: "bIsFlashing",
-  },
-  tpwsOverspeed: {
-    path: [`${CDA}/AWS_TPWS_Service.Function.GetTPWS_OverspeedIndicator`, `${CDA}/BP_AWS_TPWS_Service.Function.GetTPWS_OverspeedIndicator`],
-    field: "bIsOn",
-  },
-  tpwsOverspeedFlashing: {
-    path: [`${CDA}/AWS_TPWS_Service.Function.GetTPWS_OverspeedIndicator`, `${CDA}/BP_AWS_TPWS_Service.Function.GetTPWS_OverspeedIndicator`],
-    field: "bIsFlashing",
-  },
-  safetyBrakeDemand: {
-    path: [`${CDA}/AWS_TPWS_Service.Function.GetBrakeDemandActive`, `${CDA}/BP_AWS_TPWS_Service.Function.GetBrakeDemandActive`],
-  },
-  dsdWarning: { path: `${CDA}/BP_DVD_Service.Function.WarningDevices_GetIsWarningVisualState` },
-  dsdPenalty: { path: `${CDA}/BP_DVD_Service.Function.WarningDevices_GetPenaltyBrakeState` },
+/**
+ * Component nodes whose names vary per loco (e.g. "AWS_TPWS_Service",
+ * "BP_AWS_TPWS_Service", "PBD_LNER_Class801_AWS_TPWS_Service"). Paths can use
+ * `{AWS}` / `{DVD}`; the bridge finds the loco's actual node by suffix when it
+ * subscribes.
+ */
+export const NODE_ALIASES: Record<string, RegExp> = {
+  AWS: /AWS_TPWS_Service$/i,
+  DVD: /DVD_Service$/i,
 };
+
+/** AWS/TPWS/DSD on UK stock. */
+const UK_SAFETY: Record<string, CabField> = {
+  awsSunflower: { path: `${CDA}/{AWS}.Function.GetAWS_SunflowerState`, field: "CurrentState" },
+  awsWarning: { path: `${CDA}/{AWS}.Property.AWS_WarningState` },
+  tpwsTrainStop: { path: `${CDA}/{AWS}.Function.GetTPWS_TrainStopIndicator`, field: "bIsOn" },
+  tpwsTrainStopFlashing: { path: `${CDA}/{AWS}.Function.GetTPWS_TrainStopIndicator`, field: "bIsFlashing" },
+  tpwsOverspeed: { path: `${CDA}/{AWS}.Function.GetTPWS_OverspeedIndicator`, field: "bIsOn" },
+  tpwsOverspeedFlashing: { path: `${CDA}/{AWS}.Function.GetTPWS_OverspeedIndicator`, field: "bIsFlashing" },
+  safetyBrakeDemand: { path: `${CDA}/{AWS}.Function.GetBrakeDemandActive` },
+  dsdWarning: { path: `${CDA}/{DVD}.Function.WarningDevices_GetIsWarningVisualState` },
+  dsdPenalty: { path: `${CDA}/{DVD}.Function.WarningDevices_GetPenaltyBrakeState` },
+};
+
+/**
+ * Swaps `{ALIAS}` placeholders for the loco's real node names. Paths whose
+ * alias isn't on this loco are dropped (they'd only ever read null).
+ */
+export function resolveProfile(profile: LocoProfile, nodeNames: string[]): LocoProfile {
+  const found: Record<string, string | undefined> = {};
+  for (const [alias, pattern] of Object.entries(NODE_ALIASES)) found[alias] = nodeNames.find((n) => pattern.test(n));
+  const resolvePath = (p: string) => {
+    let missing = false;
+    const out = p.replace(/\{(\w+)\}/g, (_, alias: string) => found[alias] ?? ((missing = true), ""));
+    return missing ? null : out;
+  };
+  const fields: Record<string, CabField> = {};
+  for (const [key, f] of Object.entries(profile.fields)) {
+    const paths = [f.path].flat().map(resolvePath).filter((p): p is string => p != null);
+    if (paths.length) fields[key] = { ...f, path: paths.length === 1 ? paths[0]! : paths };
+  }
+  return { ...profile, fields };
+}
 
 export const PROFILES: LocoProfile[] = [
   {
     id: "class805",
-    name: "Class 805 Evero",
-    match: "Class80[05]",
+    // The whole Hitachi AT300 family: 800, 801, 802, 805, 807, 810.
+    name: "Class 80x (Hitachi AT300)",
+    match: "Class8(0[0-25-7]|10)",
     screen: "hitachi-at300",
     fields: {
       ...UK_SAFETY,
@@ -73,7 +86,9 @@ export const PROFILES: LocoProfile[] = [
       powerNotch: { path: `${CDA}/PowerHandle(IrregularLever).Function.GetCurrentNotchIndex`, field: "ReturnValue" },
       reverserNotch: { path: `${CDA}/Reverser(IrregularLever).Function.GetCurrentNotchIndex`, field: "ReturnValue" },
       engineRunning: { path: `${CDA}.Property.bIsEngineRunning` },
-      trainLinePowered: { path: `${CDA}.Property.bTrainLinePowered` },
+      // The driving vehicle's own current collector (bTrainLinePowered reads false even at full power on the 801).
+      pantographUp: { path: `${CDA}/CurrentCollector.Property.bDeployed` },
+      lineSupply: { path: `${CDA}/CurrentCollector.Property.bHasLocalSupply` },
       powerMode: { path: `${CDA}.Property.expectedPowerMode` },
       draSet: { path: `${CDA}.Property.bIsDRA_Set` },
       brakeHoldSpeedReached: { path: `${CDA}.Property.bBrakeHoldSpeedReached` },
@@ -109,6 +124,20 @@ export const PROFILES: LocoProfile[] = [
       batteryPower: { path: `${CDA}.Property.bBatteryPower` },
       tractionLocked: { path: `${CDA}/TractionLockManager.Property.bIsLocked` },
       destination: { path: `${CDA}/PIS_Manager.Property.FinalDestination` },
+    },
+  },
+  {
+    // Bombardier Electrostar family. Paths beyond AWS/TPWS/DSD need a probe of
+    // the 377 to confirm; the desk falls back to the universal HUD values.
+    id: "electrostar",
+    name: "Class 377 Electrostar",
+    match: "Class37[5-9]|Class387",
+    screen: "electrostar",
+    fields: {
+      ...UK_SAFETY,
+      mainRes: { path: `${SIM}/MR (AirPipe).Pressure_BAR_G` },
+      brakeCylinder: { path: `${SIM}/BrakeCylinder_1_1.Pressure_BAR_G` },
+      tractionLocked: { path: `${CDA}/TractionLockManager.Property.bIsLocked` },
     },
   },
   {

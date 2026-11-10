@@ -47,11 +47,16 @@ For UI work, `npm run dev:web` runs Vite with hot reload on port 5173 and forwar
 
 The **Map** view (switch in the top bar) shows the train's live position and heading with its trail, on OpenStreetMap with optional OpenRailwayMap layers for track, max speed and signals. A compact readout and the Ahead column stay visible so you can drive from the map. The game's position can sit 100–200 m off the real-world track, depending on the route.
 
-The **Cab** view draws a cab display for the current loco from live values (the game's own screens can't be streamed). Profiles in `packages/shared/src/profiles.ts` choose the screen and the extra API paths it reads:
+The **Cab** view replicates the current loco's own desk displays, full screen, built from live values (the game's own screens can't be streamed). Profiles in `packages/shared/src/profiles.ts` choose the desk and the extra API paths it reads:
 
-- **Class 800/805**: Hitachi AT300-style display with traction/brake demand, MR/BP/BC pressures, status tiles and AWS/TPWS/DSD.
-- **Class 700/707**: Siemens Desiro City-style display with the same layout, plus AC/DC supply, pantograph, shoes, regenerative braking, brake hold and the PIS destination (when the game provides one as text).
-- **Class 465** and any other loco: analogue speedometer, duplex brake gauges, ammeter and engine RPM (shown once the loco reports them), plus AWS/TPWS/DSD where fitted.
+- **Class 800/801/802/805/807/810 (Hitachi AT300)**: an ETCS driver display (DMI) as the speedometer, laid out to the ERA DMI specification. It has the permitted-speed band and hook, a distance-to-target bar, a speed-set marker, and needle colours by supervision status. Beside it is the train management screen: status bar, status tiles, traction/brake demand and MR/BP/BC pressures.
+- **Class 700/707 (Siemens Desiro City)**: the same DMI, with a train control screen showing AC/DC supply, pantograph, shoes, regenerative braking and brake hold.
+- **Class 375/377/379/387 (Electrostar)**: the MITRAC display (Driver's Menu with clock, Door Status, Traction Status), a black-faced analogue speedometer with a red speed-set pointer, a brake gauge (main reservoir red, brake cylinder white), a power/brake controller readout (P1–P4, B1–B3, EB) and the AWS/TPWS panel.
+- **Anything else**: an analogue speedometer, brake gauges, ammeter and engine RPM (shown once the loco reports them), plus AWS/TPWS/DSD where fitted.
+
+The DMI's planning area (speed profile, gradients and red signals ahead) is filled from TSW's lookahead. A real DMI outside ETCS areas leaves it blank, so it can be turned off in Settings.
+
+To try a desk without the game, run `npm run demo -- --loco Class700` (or `Class377`, `Class805`).
 
 To add a loco, run `npm run probe` in its cab, find the values in `apps/bridge/dumps/<time>/current-drivable-actor.txt`, and add a profile.
 

@@ -18,6 +18,8 @@ export interface Settings {
   comfortDecel: number;
   /** Above this the advice says "BRAKE HARD", m/s². */
   urgentDecel: number;
+  /** Fill the ETCS display's planning area from the game's lookahead (a real non-ETCS DMI leaves it blank). */
+  dmiPlanning: boolean;
 }
 
 const ALL_ON: Record<AlertKey, boolean> = {
@@ -36,6 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
   brakingAdvice: "countdown",
   comfortDecel: 0.45,
   urgentDecel: 0.8,
+  dmiPlanning: true,
 };
 
 const STORAGE_KEY = "tsw.settings";

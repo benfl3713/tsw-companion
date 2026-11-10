@@ -20,12 +20,14 @@ interface Props {
   needles: Needle[];
   label: string;
   unit: string;
-  /** Digits after the decimal point in the readout. */
-  digits?: number;
+  /** Digits after the decimal point in the readout; null hides the readout. */
+  digits?: number | null;
+  /** Pointers on the outer edge, e.g. a speed-set bug. */
+  markers?: { value: number; colour: "red" | "yellow" }[];
 }
 
 /** Round analogue gauge with up to two needles, in the style of a cab instrument. */
-export function Gauge({ min = 0, max, majorStep, minorStep, needles, label, unit, digits = 1 }: Props) {
+export function Gauge({ min = 0, max, majorStep, minorStep, needles, label, unit, digits = 1, markers = [] }: Props) {
   const angle = (v: number) => START + ((Math.min(Math.max(v, min), max) - min) / (max - min)) * SWEEP;
   const ticks = [];
   const minor = minorStep ?? majorStep / 2;
@@ -53,6 +55,11 @@ export function Gauge({ min = 0, max, majorStep, minorStep, needles, label, unit
       <text y={-34} className="g-label" textAnchor="middle">
         {label}
       </text>
+      {markers.map((m, i) => (
+        <g key={`m${i}`} transform={`rotate(${angle(m.value)})`}>
+          <path d={`M 0 ${-R + 1} l -5 -8 h 10 z`} className={`g-needle ${m.colour}`} />
+        </g>
+      ))}
       {needles.map((n, i) =>
         n.value == null ? null : (
           <g key={i} transform={`rotate(${angle(n.value)})`}>
@@ -61,9 +68,11 @@ export function Gauge({ min = 0, max, majorStep, minorStep, needles, label, unit
         ),
       )}
       <circle r={7} className="g-hub" />
-      <text y={44} className="g-readout" textAnchor="middle">
-        {primary == null ? "--" : primary.toFixed(digits)}
-      </text>
+      {digits != null && (
+        <text y={44} className="g-readout" textAnchor="middle">
+          {primary == null ? "--" : primary.toFixed(digits)}
+        </text>
+      )}
       <text y={58} className="g-unit" textAnchor="middle">
         {unit}
       </text>

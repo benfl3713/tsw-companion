@@ -4,13 +4,49 @@
     {
       "name": "bridge",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["start"],
+      "runtimeArgs": [
+        "start"
+      ],
       "port": 31280
     },
     {
       "name": "bridge-demo",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["start", "--", "--demo", "--port", "31281"],
+      "runtimeArgs": [
+        "start",
+        "--",
+        "--demo",
+        "--port",
+        "31281"
+      ],
+      "port": 31281
+    },
+    {
+      "name": "bridge-demo-700",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "start",
+        "--",
+        "--demo",
+        "--port",
+        "31281",
+        "--loco",
+        "Class700"
+      ],
+      "port": 31281
+    },
+    {
+      "name": "bridge-demo-377",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "start",
+        "--",
+        "--demo",
+        "--port",
+        "31281",
+        "--loco",
+        "Class377"
+      ],
       "port": 31281
     }
   ]

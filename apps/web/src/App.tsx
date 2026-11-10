@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { PROFILES, type DriveState, type Telemetry } from "@tsw/shared";
 import { AnalogueEmu } from "./components/cab/AnalogueEmu";
 import { DesiroCity } from "./components/cab/DesiroCity";
+import { Electrostar } from "./components/cab/Electrostar";
 import { HitachiAt300 } from "./components/cab/HitachiAt300";
 import { Alerts } from "./components/Alerts";
 import { useSound } from "./audio";
@@ -204,6 +205,18 @@ export function App() {
     kind === "handle" || kind === "fraction" ? d[key] != null : ranges[key] !== undefined,
   );
   const profile = PROFILES.find((p) => p.id === t.cab?.profileId);
+  // Text for the ETCS display's message area, most urgent first.
+  const cabValues = t.cab?.values;
+  const cabMessage =
+    cabValues?.awsWarning
+      ? "AWS: acknowledge"
+      : cabValues?.dsdWarning || d.alerter
+        ? "Vigilance: acknowledge"
+        : cabValues?.safetyBrakeDemand
+          ? "Brake demand"
+          : limit != null && toUnit(d.speed ?? 0, unit) > limit + 1
+            ? "Overspeed"
+            : null;
 
   return (
     <div className="app">
@@ -212,12 +225,15 @@ export function App() {
         <Alerts t={t} unit={unit} sound={sound} />
       </div>
 
+      {/* Cab: the loco's own desk displays, full screen, nothing generic. */}
       {view === "cab" && (
         <main className="cab-view">
           {profile?.screen === "hitachi-at300" ? (
-            <HitachiAt300 drive={d} values={t.cab?.values} unit={unit} dialMax={dial} limit={limit} target={target} />
+            <HitachiAt300 t={t} drive={d} unit={unit} maxSpeed={maxSpeed} message={cabMessage} />
           ) : profile?.screen === "desiro-city" ? (
-            <DesiroCity drive={d} values={t.cab?.values} unit={unit} dialMax={dial} limit={limit} target={target} />
+            <DesiroCity t={t} drive={d} unit={unit} maxSpeed={maxSpeed} message={cabMessage} />
+          ) : profile?.screen === "electrostar" ? (
+            <Electrostar t={t} drive={d} unit={unit} maxSpeed={maxSpeed} message={cabMessage} />
           ) : (
             <AnalogueEmu
               objectClass={t.loco?.objectClass ?? ""}
@@ -229,7 +245,6 @@ export function App() {
               target={target}
             />
           )}
-          <UpcomingStrip driverAid={aid} track={t.track} unit={unit} />
         </main>
       )}
 

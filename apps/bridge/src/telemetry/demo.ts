@@ -1,4 +1,4 @@
-import type { Telemetry, UpcomingLimit, UpcomingSignal } from "@tsw/shared";
+import { findProfile, type Telemetry, type UpcomingLimit, type UpcomingSignal } from "@tsw/shared";
 import type { UpdateListener } from "./loop.js";
 
 // A looping 20 km synthetic route for working on the UI without the game.
@@ -41,14 +41,17 @@ function limitAt(pos: number): number {
   return current;
 }
 
-export function runDemo(onUpdate: UpdateListener): () => void {
+/** `loco` picks the demo train, e.g. "Class805", "Class700" or "Class377", so each cab desk can be tried. */
+export function runDemo(onUpdate: UpdateListener, loco = "Class805"): () => void {
+  const objectClass = `RVM_DEMO_${loco}_C`;
+  const profileId = findProfile(objectClass)?.id ?? "generic";
   let pos = 0;
   let speed = 20;
   let tick = 0;
   onUpdate({
     connection: { status: "connected", gameName: "Demo route", gameBuild: 0 },
-    // Matches the Class 805 profile so the cab screen can be worked on too.
-    loco: { objectClass: "RVM_DEMO_Class805_C", formationLength: 5 },
+    // Matches that loco's cab profile so its desk can be worked on too.
+    loco: { objectClass, formationLength: 5 },
   });
 
   let brakeCylinder = 0;
@@ -91,7 +94,7 @@ export function runDemo(onUpdate: UpdateListener): () => void {
         isTractionLocked: false,
       },
       cab: {
-        profileId: "class805",
+        profileId,
         values: {
           awsSunflower: awsCycle < 2 ? 1 : 0,
           awsWarning: awsCycle === 0 ? 1 : 0,
@@ -111,7 +114,8 @@ export function runDemo(onUpdate: UpdateListener): () => void {
           powerNotch: 4,
           reverserNotch: 2,
           engineRunning: false,
-          trainLinePowered: true,
+          pantographUp: true,
+          lineSupply: true,
           powerMode: 1,
           draSet: false,
           brakeHoldSpeedReached: speed < 0.5,

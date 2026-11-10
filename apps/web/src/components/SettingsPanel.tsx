@@ -145,6 +145,17 @@ export function SettingsPanel({ unit, sound, onToggleSound, onClose }: Props) {
           />
         </label>
 
+        <h2>Cab displays</h2>
+        <div className="settings-row single">
+          <div className="col">
+            <span>ETCS planning area</span>
+            <span className="muted small">
+              Show limits, gradients and red signals ahead on the 700/80x display. Off matches a real DMI outside ETCS areas.
+            </span>
+          </div>
+          <Toggle label="ETCS planning area" on={settings.dmiPlanning} onChange={(on) => update({ dmiPlanning: on })} />
+        </div>
+
         <footer className="sheet-foot">
           <span className="muted small">Settings are saved on this device only.</span>
           <button className="unit-toggle" onClick={reset}>

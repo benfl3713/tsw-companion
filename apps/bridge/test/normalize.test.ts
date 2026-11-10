@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DriverAidData, DriverAidPlayerInfo, DriverAidTrackData } from "@tsw/shared";
+import { findProfile, resolveProfile, type DriverAidData, type DriverAidPlayerInfo, type DriverAidTrackData } from "@tsw/shared";
 import samples from "./fixtures/tsw7-class66-depot.json" with { type: "json" };
 import {
   clean,
@@ -51,6 +51,28 @@ describe("readField", () => {
   it("falls back through alternative paths", () => {
     const spec = { path: ["AWS_TPWS_Service.GetAWS_SunflowerState", "BP_AWS_TPWS_Service.GetAWS_SunflowerState"], field: "CurrentState" };
     expect(readField(values, spec)).toBe(1);
+  });
+});
+
+describe("resolveProfile", () => {
+  const profile = findProfile("RVM_PBD_LNER_Class801_01_DPTS_C")!;
+
+  it("finds loco-specific service nodes by suffix", () => {
+    const resolved = resolveProfile(profile, ["Simulation", "PBD_LNER_Class801_AWS_TPWS_Service", "BP_DVD_Service"]);
+    expect(resolved.fields.awsSunflower?.path).toBe(
+      "CurrentDrivableActor/PBD_LNER_Class801_AWS_TPWS_Service.Function.GetAWS_SunflowerState",
+    );
+    expect(resolved.fields.dsdWarning?.path).toBe(
+      "CurrentDrivableActor/BP_DVD_Service.Function.WarningDevices_GetIsWarningVisualState",
+    );
+    // Plain paths are untouched.
+    expect(resolved.fields.mainRes?.path).toBe("CurrentDrivableActor/Simulation/MR (AirPipe).Pressure_BAR_G");
+  });
+
+  it("drops fields whose component the loco lacks", () => {
+    const resolved = resolveProfile(profile, ["Simulation"]);
+    expect(resolved.fields.awsSunflower).toBeUndefined();
+    expect(resolved.fields.mainRes).toBeDefined();
   });
 });
 
