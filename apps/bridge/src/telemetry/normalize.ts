@@ -38,6 +38,33 @@ export function firstValue(values: Record<string, unknown> | undefined): unknown
   return undefined;
 }
 
+type ValuesByPath = { get(path: string): Record<string, unknown> | undefined };
+
+/**
+ * Reads one field from a subscription read. Tries each alternative path in
+ * turn; a loco without the control (activeField false) reads as null.
+ */
+export function readField(
+  values: ValuesByPath,
+  spec: { path: string | string[]; field?: string; activeField?: string },
+): unknown {
+  for (const path of [spec.path].flat()) {
+    const v = values.get(path);
+    if (!v) continue;
+    if (spec.activeField && v[spec.activeField] === false) return null;
+    return spec.field ? v[spec.field] : firstValue(v);
+  }
+  return null;
+}
+
+/** Numbers stay numbers (FLT_MAX -> null); booleans and short strings pass through. */
+export function cabValue(v: unknown): number | boolean | string | null {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "number") return clean(v);
+  if (typeof v === "string" && v.length < 200) return v;
+  return null;
+}
+
 export function firstNumber(values: Record<string, unknown> | undefined): number | null {
   const v = firstValue(values);
   if (typeof v === "boolean") return v ? 1 : 0;

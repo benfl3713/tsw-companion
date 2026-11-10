@@ -8,6 +8,7 @@ import {
   normalizeDriverAid,
   normalizePlayerInfo,
   normalizeTrackData,
+  readField,
 } from "../src/telemetry/normalize.js";
 
 describe("clean", () => {
@@ -25,6 +26,31 @@ describe("HUD values", () => {
     expect(firstNumber(undefined)).toBeNull();
     expect(firstBoolean({ "Is Slipping": true })).toBe(true);
     expect(firstBoolean({ Value: 0 })).toBe(false);
+  });
+});
+
+describe("readField", () => {
+  // Response shapes observed on the Class 805.
+  const values = new Map<string, Record<string, unknown>>([
+    ["HUD_GetPowerHandle", { Power: -38, IsActive: true, IsNegative: true }],
+    ["HUD_GetLocomotiveBrakeHandle", { HandlePosition: 0, IsActive: false }],
+    ["HUD_GetBrakeGauge_1", { "WhiteNeedle (Pa)": 120000, "RedNeedle (Pa)": 850000 }],
+    ["BP_AWS_TPWS_Service.GetAWS_SunflowerState", { CurrentState: 1 }],
+  ]);
+
+  it("reads a named field", () => {
+    expect(readField(values, { path: "HUD_GetBrakeGauge_1", field: "RedNeedle (Pa)" })).toBe(850000);
+    expect(readField(values, { path: "HUD_GetPowerHandle", field: "Power", activeField: "IsActive" })).toBe(-38);
+  });
+
+  it("returns null for controls the loco doesn't have", () => {
+    expect(readField(values, { path: "HUD_GetLocomotiveBrakeHandle", field: "HandlePosition", activeField: "IsActive" })).toBeNull();
+    expect(readField(values, { path: "Missing" })).toBeNull();
+  });
+
+  it("falls back through alternative paths", () => {
+    const spec = { path: ["AWS_TPWS_Service.GetAWS_SunflowerState", "BP_AWS_TPWS_Service.GetAWS_SunflowerState"], field: "CurrentState" };
+    expect(readField(values, spec)).toBe(1);
   });
 });
 

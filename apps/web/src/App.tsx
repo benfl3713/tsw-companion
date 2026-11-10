@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
-import type { DriveState, Telemetry } from "@tsw/shared";
+import { PROFILES, type DriveState, type Telemetry } from "@tsw/shared";
+import { AnalogueEmu } from "./components/cab/AnalogueEmu";
+import { HitachiAt300 } from "./components/cab/HitachiAt300";
+import { SafetyAlerts } from "./components/cab/SafetyPanel";
 import {
   aspectColour,
   Bar,
@@ -16,13 +19,16 @@ import { UpcomingStrip } from "./components/UpcomingStrip";
 import { useTelemetry, type StoreState } from "./telemetry";
 import { formatDistance, limitIn, toUnit, UNIT_LABEL, useSpeedUnit } from "./units";
 
-type View = "drive" | "map";
+const VIEWS = ["drive", "cab", "map"] as const;
+type View = (typeof VIEWS)[number];
+const VIEW_LABEL: Record<View, string> = { drive: "Drive", cab: "Cab", map: "Map" };
 const VIEW_KEY = "tsw.view";
 
 function useView(): [View, (v: View) => void] {
   const [view, setView] = useState<View>(() => {
     try {
-      return localStorage.getItem(VIEW_KEY) === "map" ? "map" : "drive";
+      const v = localStorage.getItem(VIEW_KEY);
+      return (VIEWS as readonly string[]).includes(v ?? "") ? (v as View) : "drive";
     } catch {
       return "drive";
     }
@@ -40,23 +46,44 @@ function useView(): [View, (v: View) => void] {
   ];
 }
 
-// Numeric HUD values shown as bars once a loco has used them.
-const CONTROLS: { key: keyof DriveState; label: string; percent?: boolean }[] = [
-  { key: "powerHandle", label: "Power" },
-  { key: "electricBrakeHandle", label: "Dynamic brake" },
-  { key: "trainBrakeHandle", label: "Train brake", percent: true },
-  { key: "locoBrakeHandle", label: "Loco brake", percent: true },
-  { key: "brakeGauge1", label: "Brake gauge 1" },
-  { key: "brakeGauge2", label: "Brake gauge 2" },
-  { key: "ammeter", label: "Ammeter" },
-  { key: "tractiveEffort", label: "Tractive effort" },
-  { key: "engineRpm", label: "Engine RPM" },
+type ControlKind = "handle" | "fraction" | "pressure" | "amps" | "force" | "rpm";
+
+// HUD values shown as bars. Handles are null when the loco lacks them;
+// gauges read 0 when absent, so those appear once they've moved.
+const CONTROLS: { key: keyof DriveState; label: string; kind: ControlKind }[] = [
+  { key: "powerHandle", label: "Power handle", kind: "handle" },
+  { key: "electricBrakeHandle", label: "Dynamic brake", kind: "fraction" },
+  { key: "trainBrakeHandle", label: "Train brake", kind: "fraction" },
+  { key: "locoBrakeHandle", label: "Loco brake", kind: "fraction" },
+  { key: "brakeGauge1", label: "Brake gauge 1", kind: "pressure" },
+  { key: "brakeGauge2", label: "Brake gauge 2", kind: "pressure" },
+  { key: "ammeter", label: "Ammeter", kind: "amps" },
+  { key: "tractiveEffort", label: "Tractive effort", kind: "force" },
+  { key: "engineRpm", label: "Engine", kind: "rpm" },
 ];
 
+function formatControl(kind: ControlKind, v: number, max: number): string {
+  switch (kind) {
+    case "handle":
+      // Combined handles go -100..100 (%); others report notches or 0..1.
+      return max > 10 ? `${Math.round(v)}%` : v.toFixed(max <= 1 ? 2 : 0);
+    case "fraction":
+      return `${Math.round(v * 100)}%`;
+    case "pressure":
+      return `${(v / 100_000).toFixed(1)} bar`;
+    case "amps":
+      return `${Math.round(v)} A`;
+    case "force":
+      // Some locos (e.g. Class 700) report a 0..1 fraction here instead of newtons.
+      return max <= 1.5 ? `${Math.round(v * 100)}%` : `${Math.round(v / 1000)} kN`;
+    case "rpm":
+      return `${Math.round(v)} rpm`;
+  }
+}
+
 /**
- * Not every loco implements every HUD value; unimplemented ones read 0
- * forever. Show a control only once it has moved, and scale its bar to the
- * largest value seen (handles that report notches rather than 0–1).
+ * Largest absolute value seen per control for this loco, used to scale bars
+ * (handles may report notches, percent or 0..1) and to reveal gauges.
  */
 function useSeenRanges(objectClass: string | undefined, drive: DriveState | null) {
   const ref = useRef<{ loco?: string; max: Partial<Record<keyof DriveState, number>> }>({ max: {} });
@@ -65,7 +92,7 @@ function useSeenRanges(objectClass: string | undefined, drive: DriveState | null
     for (const { key } of CONTROLS) {
       const v = drive[key];
       if (typeof v === "number" && v !== 0) {
-        ref.current.max[key] = Math.max(ref.current.max[key] ?? 0, Math.abs(v), 1);
+        ref.current.max[key] = Math.max(ref.current.max[key] ?? 0, Math.abs(v));
       }
     }
   }
@@ -123,9 +150,9 @@ export function App() {
       {t.position?.serviceName && <span className="muted">{t.position.serviceName}</span>}
       <span className="spacer" />
       <div className="segmented" role="tablist">
-        {(["drive", "map"] as const).map((v) => (
+        {VIEWS.map((v) => (
           <button key={v} role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>
-            {v === "drive" ? "Drive" : "Map"}
+            {VIEW_LABEL[v]}
           </button>
         ))}
       </div>
@@ -157,12 +184,37 @@ export function App() {
 
   const signal = aid?.signals[0];
   const nextLimit = aid?.limits[0];
+  const dial = dialMax(maxSpeed, unit);
+  const visibleControls = CONTROLS.filter(({ key, kind }) =>
+    kind === "handle" || kind === "fraction" ? d[key] != null : ranges[key] !== undefined,
+  );
+  const profile = PROFILES.find((p) => p.id === t.cab?.profileId);
 
   return (
     <div className="app">
       {header}
       {d.alerter ? <div className="alert vigilance">VIGILANCE: acknowledge</div> : null}
       {d.isSlipping ? <div className="alert slip">WHEELSLIP</div> : null}
+      <SafetyAlerts values={t.cab?.values} />
+
+      {view === "cab" && (
+        <main className="cab-view">
+          {profile?.screen === "hitachi-at300" ? (
+            <HitachiAt300 drive={d} values={t.cab?.values} unit={unit} dialMax={dial} limit={limit} target={target} />
+          ) : (
+            <AnalogueEmu
+              objectClass={t.loco?.objectClass ?? ""}
+              drive={d}
+              values={t.cab?.values}
+              unit={unit}
+              dialMax={dial}
+              limit={limit}
+              target={target}
+            />
+          )}
+          <UpcomingStrip driverAid={aid} track={t.track} unit={unit} />
+        </main>
+      )}
 
       {/* The map stays mounted so its trail and tiles survive switching views. */}
       <main className={`map-view ${view === "map" ? "" : "hidden"}`}>
@@ -198,7 +250,7 @@ export function App() {
 
       <main className={`panel ${view === "drive" ? "" : "hidden"}`}>
         <section className="speedo-wrap">
-          <Speedometer unit={unit} max={dialMax(maxSpeed, unit)} limit={limit} target={target} />
+          <Speedometer unit={unit} max={dial} limit={limit} target={target} />
           <div className="speedo-meta">
             <span>
               Accel <b>{(d.acceleration ?? 0).toFixed(2)}</b> m/s²
@@ -223,15 +275,12 @@ export function App() {
 
           <section className="card controls">
             <h2>Controls</h2>
-            {CONTROLS.filter(({ key }) => ranges[key] !== undefined).map(({ key, label, percent }) => {
+            {visibleControls.map(({ key, label, kind }) => {
               const v = (d[key] as number | null) ?? 0;
-              const max = ranges[key]!;
-              const display = percent && max <= 1 ? `${Math.round(v * 100)}%` : v.toFixed(max <= 1 ? 2 : 1);
-              return <Bar key={key} label={label} value={Math.abs(v)} max={max} display={display} />;
+              const max = Math.max(ranges[key] ?? 0, kind === "fraction" ? 1 : 0, 1e-9);
+              return <Bar key={key} label={label} value={Math.abs(v)} max={max} display={formatControl(kind, v, max)} />;
             })}
-            {CONTROLS.every(({ key }) => ranges[key] === undefined) && (
-              <span className="muted small">Controls appear here once you move them.</span>
-            )}
+            {visibleControls.length === 0 && <span className="muted small">Controls appear here once you move them.</span>}
           </section>
         </section>
 

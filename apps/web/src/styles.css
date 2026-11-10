@@ -264,6 +264,350 @@ body,
   font-size: 10px;
 }
 
+/* Cab view */
+.cab-view {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 16px;
+  padding: 16px;
+}
+@media (orientation: portrait), (max-width: 760px) {
+  .cab-view {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+}
+
+/* Analogue gauges */
+.gauge {
+  width: 100%;
+  max-width: 220px;
+}
+.g-bezel {
+  fill: #2a2f36;
+}
+.g-face {
+  fill: #0d0f12;
+  stroke: #000;
+}
+.g-tick {
+  stroke: #c9d1d9;
+  stroke-width: 1;
+}
+.g-tick.major {
+  stroke-width: 2.5;
+}
+.g-tick-label {
+  fill: #e8edf2;
+  font-size: 11px;
+}
+.g-label {
+  fill: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.g-needle.white {
+  fill: #f5f5f5;
+}
+.g-needle.red {
+  fill: #ef4b4b;
+}
+.g-needle.yellow {
+  fill: var(--yellow);
+}
+.g-hub {
+  fill: #3a414a;
+}
+.g-readout {
+  fill: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.g-unit {
+  fill: var(--muted);
+  font-size: 9px;
+}
+.analogue {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 0;
+  background: radial-gradient(circle at 30% 30%, #1b2027, #0f1215);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+}
+.analogue-speedo {
+  display: grid;
+  place-items: center;
+}
+.analogue-gauges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  justify-items: center;
+  align-items: center;
+}
+.analogue-gauges .safety {
+  grid-column: 1 / -1;
+}
+
+/* AWS / TPWS / DSD */
+.safety {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #0a0c0e;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.safety-aws {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.sunflower {
+  width: 56px;
+  height: 56px;
+}
+.sf-rim {
+  fill: #000;
+  stroke: #555;
+  stroke-width: 2;
+}
+.sf-a,
+.sf-b {
+  fill: #111;
+}
+.sunflower.on .sf-a {
+  fill: #ffd400;
+}
+.safety-lamps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 14px;
+  font-size: 13px;
+}
+.lamp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.lamp-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2a1515;
+  border: 1px solid #000;
+}
+.lamp.amber .lamp-dot {
+  background: #2a2210;
+}
+.lamp.lit {
+  color: var(--text);
+}
+.lamp.red.lit .lamp-dot {
+  background: var(--bad);
+  box-shadow: 0 0 10px var(--bad);
+}
+.lamp.amber.lit .lamp-dot {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+.lamp.flash .lamp-dot {
+  animation: flash 0.6s steps(2) infinite;
+}
+
+/* Hitachi AT300-style display */
+.at-screen {
+  --at-bg: #0c1726;
+  --at-panel: #13233a;
+  --at-line: #24405f;
+  --at-text: #dbe8f5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 16px;
+  background: var(--at-bg);
+  border: 6px solid #05080c;
+  border-radius: 14px;
+  padding: 16px;
+  color: var(--at-text);
+  min-height: 0;
+}
+.at-screen.at-off {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+@media (orientation: portrait), (max-width: 900px) {
+  .at-screen {
+    grid-template-columns: 1fr;
+  }
+}
+.at-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 0;
+}
+.at-screen .dial-track {
+  stroke: #1e3350;
+}
+.at-handle {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.at-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+.at-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.at-tile {
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--at-line);
+  background: var(--at-panel);
+  color: #6f86a0;
+}
+.at-tile.on {
+  color: #0c1726;
+  background: #7fd4ff;
+  border-color: #7fd4ff;
+}
+.at-tile.warn {
+  color: #111;
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+.at-mid {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 16px;
+  flex: 1;
+  min-height: 160px;
+}
+.at-demand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.at-demand-label {
+  font-size: 11px;
+  color: #6f86a0;
+}
+.at-demand-track {
+  flex: 1;
+  width: 34px;
+  display: flex;
+  flex-direction: column;
+  background: var(--at-panel);
+  border: 1px solid var(--at-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.at-demand-half {
+  flex: 1;
+  display: flex;
+  position: relative;
+}
+.at-demand-half.up {
+  align-items: flex-end;
+}
+.at-demand-half.down {
+  align-items: flex-start;
+}
+.at-demand-fill {
+  width: 100%;
+  transition: height 60ms linear;
+}
+.at-demand-fill.traction {
+  background: #3ccf7a;
+}
+.at-demand-fill.brake {
+  background: var(--accent);
+}
+.at-demand-zero {
+  height: 2px;
+  background: var(--at-text);
+}
+.at-demand-value {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.at-pressures {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--at-panel);
+  border: 1px solid var(--at-line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.at-pressures h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6f86a0;
+}
+.at-pressure {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 8px;
+}
+.at-pressure-label {
+  font-weight: 700;
+  font-size: 13px;
+}
+.at-pressure-track {
+  height: 12px;
+  background: #0a1422;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.at-pressure-fill {
+  height: 100%;
+  background: #7fd4ff;
+  transition: width 80ms linear;
+}
+.at-pressure-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.at-effort {
+  font-size: 13px;
+  color: #a9bdd2;
+}
+.at-screen .safety {
+  background: #08111d;
+  border-color: var(--at-line);
+}
+
 /* Upcoming strip */
 .strip {
   display: flex;

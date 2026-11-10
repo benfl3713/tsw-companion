@@ -45,6 +45,13 @@ For UI work, `npm run dev:web` runs Vite with hot reload on port 5173 and forwar
 
 The **Map** view (switch in the top bar) shows the train's live position and heading with its trail, on OpenStreetMap with optional OpenRailwayMap layers for track, max speed and signals. A compact readout and the Ahead column stay visible so you can drive from the map. The game's position can sit 100–200 m off the real-world track, depending on the route.
 
+The **Cab** view draws a cab display for the current loco from live values (the game's own screens can't be streamed). Profiles in `packages/shared/src/profiles.ts` choose the screen and the extra API paths it reads:
+
+- **Class 800/805**: Hitachi AT300-style display with traction/brake demand, MR/BP/BC pressures, status tiles and AWS/TPWS/DSD.
+- **Class 465** and any other loco: analogue speedometer, duplex brake gauges, ammeter and engine RPM (shown once the loco reports them), plus AWS/TPWS/DSD where fitted.
+
+To add a loco, run `npm run probe` in its cab, find the values in `apps/bridge/dumps/<time>/current-drivable-actor.txt`, and add a profile.
+
 The **Ahead** column shows the next signals, limit changes and platforms on a log scale (tap the range button for 2 / 5 / 10 km), with the permitted speed profile on the left. The game returns at most 4 signals and 4 limits within 10 km.
 
 ## Layout

@@ -126,7 +126,18 @@ export interface Telemetry {
   position: PositionState | null;
   track: TrackState | null;
   world: WorldState | null;
+  /** Extra values for the current loco's cab screen, if it has a profile. */
+  cab: CabState | null;
 }
+
+export type CabValue = number | boolean | string | null;
+
+export interface CabState {
+  profileId: string;
+  values: Record<string, CabValue>;
+}
+
+export * from "./profiles.js";
 
 export type ConnectionStatus = "no-key" | "waiting-for-game" | "connected" | "no-train";
 
@@ -142,18 +153,28 @@ export interface LocoInfo {
   formationLength: number | null;
 }
 
-/** Fast tier: the universal HUD_* functions every loco exposes. */
+/**
+ * Fast tier: the universal HUD_* functions every loco exposes. A control the
+ * loco doesn't have (its IsActive flag is false) reads null.
+ */
 export interface DriveState {
   speed: number | null;
   acceleration: number | null;
+  /** Combined handles report negative values when braking (e.g. -38 = 38% brake). */
   powerHandle: number | null;
   trainBrakeHandle: number | null;
   locoBrakeHandle: number | null;
   electricBrakeHandle: number | null;
+  /** Brake gauges in Pa: white needle and red needle. */
   brakeGauge1: number | null;
+  brakeGauge1Red: number | null;
   brakeGauge2: number | null;
+  brakeGauge2Red: number | null;
+  /** Amps. */
   ammeter: number | null;
+  /** Newtons on most locos; a 0..1 fraction on some (e.g. Class 700). */
   tractiveEffort: number | null;
+  brakeEffort: number | null;
   engineRpm: number | null;
   gearIndex: number | null;
   direction: number | null;

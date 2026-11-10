@@ -47,9 +47,11 @@ export function runDemo(onUpdate: UpdateListener): () => void {
   let tick = 0;
   onUpdate({
     connection: { status: "connected", gameName: "Demo route", gameBuild: 0 },
-    loco: { objectClass: "RVM_DEMO_Class999_C", formationLength: 4 },
+    // Matches the Class 805 profile so the cab screen can be worked on too.
+    loco: { objectClass: "RVM_DEMO_Class805_C", formationLength: 5 },
   });
 
+  let brakeCylinder = 0;
   const timer = setInterval(() => {
     tick++;
     const dt = 1 / 30;
@@ -58,27 +60,63 @@ export function runDemo(onUpdate: UpdateListener): () => void {
     const accel = Math.max(-0.8, Math.min(0.5, (target - speed) * 0.3));
     speed = Math.max(0, speed + accel * dt);
     pos = (pos + speed * dt) % ROUTE_LENGTH;
+    // Combined power/brake handle in percent, negative when braking, like the 805.
+    const handle = Math.round(accel > 0.02 ? (accel / 0.5) * 100 : accel < -0.02 ? (accel / 0.8) * 100 : 0);
+    brakeCylinder += ((handle < 0 ? (-handle / 100) * 3.2 : 0) - brakeCylinder) * Math.min(1, dt * 2);
+    // An AWS warning approaching each caution aspect, cleared after 2 s.
+    const awsCycle = Math.floor(tick / 30) % 20;
 
     onUpdate({
       drive: {
         speed,
         acceleration: accel,
-        powerHandle: accel > 0 ? accel * 2 : 0,
-        trainBrakeHandle: accel < 0 ? -accel : 0,
+        powerHandle: handle,
+        trainBrakeHandle: handle < 0 ? -handle / 100 : 0,
         locoBrakeHandle: null,
-        electricBrakeHandle: null,
-        brakeGauge1: accel < 0 ? -accel * 3 : 0,
-        brakeGauge2: null,
-        ammeter: accel > 0 ? accel * 800 : 0,
-        tractiveEffort: null,
-        engineRpm: null,
-        gearIndex: null,
+        electricBrakeHandle: handle < 0 ? -handle / 100 : 0,
+        brakeGauge1: 0,
+        brakeGauge1Red: 0,
+        brakeGauge2: 0,
+        brakeGauge2Red: 0,
+        ammeter: 0,
+        tractiveEffort: handle > 0 ? handle * 1800 : 0,
+        brakeEffort: handle < 0 ? -handle * 2200 : 0,
+        engineRpm: 0,
+        gearIndex: 0,
         direction: 1,
-        maxPermittedSpeed: 75 * MPH,
+        maxPermittedSpeed: null,
         speedControlTarget: null,
-        alerter: Math.floor(tick / 30) % 60 === 59 ? 1 : 0,
+        alerter: null,
         isSlipping: false,
         isTractionLocked: false,
+      },
+      cab: {
+        profileId: "class805",
+        values: {
+          awsSunflower: awsCycle < 2 ? 1 : 0,
+          awsWarning: awsCycle === 0 ? 1 : 0,
+          tpwsTrainStop: false,
+          tpwsTrainStopFlashing: false,
+          tpwsOverspeed: false,
+          tpwsOverspeedFlashing: false,
+          safetyBrakeDemand: false,
+          dsdWarning: Math.floor(tick / 30) % 45 === 44,
+          dsdPenalty: false,
+          mainRes: 8.6 + Math.sin(tick / 200) * 0.6,
+          brakePipe: 5,
+          brakeCylinder,
+          tractionTargetPct: Math.max(0, handle),
+          brakeTargetPct: Math.max(0, -handle),
+          powerNotch: 4,
+          reverserNotch: 2,
+          engineRunning: false,
+          trainLinePowered: true,
+          powerMode: 1,
+          draSet: false,
+          brakeHoldSpeedReached: speed < 0.5,
+          tractionLocked: false,
+          displayPowered: true,
+        },
       },
     });
 

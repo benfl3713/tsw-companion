@@ -1,33 +1,43 @@
-import type { DriveState } from "@tsw/shared";
+import type { CabField, DriveState } from "@tsw/shared";
 
 const HUD = "CurrentDrivableActor.Function.HUD_";
 
-/**
- * Universal HUD functions present on every loco. Not every loco implements
- * every one; missing ones come back NodeValid=false and stay null.
- */
-export const DRIVE_PATHS = {
-  speed: `${HUD}GetSpeed`,
-  acceleration: `${HUD}GetAcceleration`,
-  powerHandle: `${HUD}GetPowerHandle`,
-  trainBrakeHandle: `${HUD}GetTrainBrakeHandle`,
-  locoBrakeHandle: `${HUD}GetLocomotiveBrakeHandle`,
-  electricBrakeHandle: `${HUD}GetElectricBrakeHandle`,
-  brakeGauge1: `${HUD}GetBrakeGauge_1`,
-  brakeGauge2: `${HUD}GetBrakeGauge_2`,
-  ammeter: `${HUD}GetAmmeter`,
-  tractiveEffort: `${HUD}GetTractiveEffort`,
-  engineRpm: `${HUD}GetEngineRPM`,
-  gearIndex: `${HUD}GetGearIndex`,
-  direction: `${HUD}GetDirection`,
-  maxPermittedSpeed: `${HUD}GetMaxPermittedSpeed`,
-  speedControlTarget: `${HUD}GetSpeedControlTarget`,
-  alerter: `${HUD}GetAlerter`,
-  isSlipping: `${HUD}GetIsSlipping`,
-  isTractionLocked: `${HUD}GetIsTractionLocked`,
-} as const satisfies Record<keyof DriveState, string>;
+export interface DriveField extends CabField {
+  path: string;
+  /** Values key that says whether the loco has this control; false reads as null. */
+  activeField?: string;
+  boolean?: boolean;
+}
 
-export const BOOLEAN_DRIVE_KEYS = new Set<keyof DriveState>(["isSlipping", "isTractionLocked"]);
+/**
+ * Universal HUD functions present on every loco, with the field each value
+ * lives in (verified on TSW7 with the Class 66, 465 and 805).
+ */
+export const DRIVE_FIELDS: Record<keyof DriveState, DriveField> = {
+  speed: { path: `${HUD}GetSpeed`, field: "Speed (ms)" },
+  acceleration: { path: `${HUD}GetAcceleration`, field: "Acceleration (ms2)" },
+  powerHandle: { path: `${HUD}GetPowerHandle`, field: "Power", activeField: "IsActive" },
+  trainBrakeHandle: { path: `${HUD}GetTrainBrakeHandle`, field: "HandlePosition", activeField: "IsActive" },
+  locoBrakeHandle: { path: `${HUD}GetLocomotiveBrakeHandle`, field: "HandlePosition", activeField: "IsActive" },
+  electricBrakeHandle: { path: `${HUD}GetElectricBrakeHandle`, field: "HandlePosition", activeField: "IsActive" },
+  brakeGauge1: { path: `${HUD}GetBrakeGauge_1`, field: "WhiteNeedle (Pa)" },
+  brakeGauge1Red: { path: `${HUD}GetBrakeGauge_1`, field: "RedNeedle (Pa)" },
+  brakeGauge2: { path: `${HUD}GetBrakeGauge_2`, field: "WhiteNeedle (Pa)" },
+  brakeGauge2Red: { path: `${HUD}GetBrakeGauge_2`, field: "RedNeedle (Pa)" },
+  ammeter: { path: `${HUD}GetAmmeter`, field: "Amps" },
+  tractiveEffort: { path: `${HUD}GetTractiveEffort`, field: "TractiveEffort (N)" },
+  brakeEffort: { path: `${HUD}GetTractiveEffort`, field: "BrakeEffort (N)" },
+  engineRpm: { path: `${HUD}GetEngineRPM`, field: "Needle1 RPM" },
+  gearIndex: { path: `${HUD}GetGearIndex`, field: "Value" },
+  direction: { path: `${HUD}GetDirection`, field: "Direction", activeField: "IsActive" },
+  maxPermittedSpeed: { path: `${HUD}GetMaxPermittedSpeed`, field: "MaxSpeed (ms)", activeField: "IsActive" },
+  speedControlTarget: { path: `${HUD}GetSpeedControlTarget`, field: "Speed (ms)", activeField: "IsActive" },
+  alerter: { path: `${HUD}GetAlerter`, field: "AleterState", activeField: "IsEnabled" },
+  isSlipping: { path: `${HUD}GetIsSlipping`, field: "IsSlipping", boolean: true },
+  isTractionLocked: { path: `${HUD}GetIsTractionLocked`, field: "IsTractionLocked", boolean: true },
+};
+
+export const DRIVE_PATHS = [...new Set(Object.values(DRIVE_FIELDS).map((f) => f.path))];
 
 export const PATHS = {
   objectClass: "CurrentDrivableActor.ObjectClass",

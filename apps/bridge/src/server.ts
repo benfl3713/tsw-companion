@@ -59,6 +59,7 @@ export function emptyTelemetry(): Telemetry {
     position: null,
     track: null,
     world: null,
+    cab: null,
   };
 }
 

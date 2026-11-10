@@ -1,23 +1,27 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import type {
-  ConnectionState,
-  DriveState,
-  DriverAidData,
-  DriverAidPlayerInfo,
-  DriverAidTrackData,
-  Telemetry,
+import {
+  findProfile,
+  profilePaths,
+  type CabValue,
+  type ConnectionState,
+  type DriveState,
+  type DriverAidData,
+  type DriverAidPlayerInfo,
+  type DriverAidTrackData,
+  type Telemetry,
 } from "@tsw/shared";
 import { findApiKey, TswClient } from "../tsw/client.js";
 import { SubscriptionSet, type SubscriptionValues } from "../tsw/subscription.js";
 import {
+  cabValue,
   clean,
-  firstBoolean,
   firstNumber,
   normalizeDriverAid,
   normalizePlayerInfo,
   normalizeTrackData,
+  readField,
 } from "./normalize.js";
-import { BOOLEAN_DRIVE_KEYS, DRIVE_PATHS, PATHS } from "./paths.js";
+import { DRIVE_FIELDS, DRIVE_PATHS, PATHS } from "./paths.js";
 
 export type UpdateListener = (update: Partial<Telemetry>) => void;
 
@@ -93,7 +97,7 @@ export class TelemetryLoop {
       };
       this.setConnection(connection);
       await this.stream(client, connection);
-      this.onUpdate({ loco: null, drive: null, driverAid: null, position: null, track: null });
+      this.onUpdate({ loco: null, drive: null, driverAid: null, position: null, track: null, cab: null });
       this.log("Lost connection to the game.");
     }
   }
@@ -145,24 +149,26 @@ export class TelemetryLoop {
   }
 
   private createTiers(client: TswClient, connection: ConnectionState): Tier[] {
-    const drivePaths = Object.entries(DRIVE_PATHS) as [keyof DriveState, string][];
+    const driveFields = Object.entries(DRIVE_FIELDS) as [keyof DriveState, (typeof DRIVE_FIELDS)[keyof DriveState]][];
     let trainPresent: boolean | null = null;
+    // The cab tier depends on the loco, which we only learn from the first read.
+    const profile = findProfile(this.objectClass);
 
-    return [
+    const tiers: Tier[] = [
       {
         name: "drive",
-        set: new SubscriptionSet(client, BASE_SUBSCRIPTION_ID, Object.values(DRIVE_PATHS)),
+        set: new SubscriptionSet(client, BASE_SUBSCRIPTION_ID, DRIVE_PATHS),
         intervalMs: 0,
         reads: 0,
         handle: (values) => {
-          const speed = values.get(DRIVE_PATHS.speed);
-          if (!speed) {
+          if (!values.get(DRIVE_FIELDS.speed.path)) {
             this.onUpdate({ drive: null });
             return;
           }
           const drive = {} as Record<keyof DriveState, number | boolean | null>;
-          for (const [key, path] of drivePaths) {
-            drive[key] = BOOLEAN_DRIVE_KEYS.has(key) ? firstBoolean(values.get(path)) : firstNumber(values.get(path));
+          for (const [key, spec] of driveFields) {
+            const v = readField(values, spec);
+            drive[key] = spec.boolean ? (v == null ? null : Boolean(v)) : clean(v);
           }
           this.onUpdate({ drive: drive as unknown as DriveState });
         },
@@ -187,6 +193,8 @@ export class TelemetryLoop {
             // Subscriptions may be bound to the old actor, so rebuild them.
             if (!first) this.generation++;
           }
+          // Also rebuild if this loco needs a different cab profile than the tiers were built with.
+          if (findProfile(objectClass)?.id !== profile?.id) this.generation++;
           if (trainPresent !== (objectClass !== null)) {
             trainPresent = objectClass !== null;
             this.onUpdate({ connection: { ...connection, status: trainPresent ? "connected" : "no-train" } });
@@ -231,5 +239,23 @@ export class TelemetryLoop {
         },
       },
     ];
+
+    if (profile) {
+      const fields = Object.entries(profile.fields);
+      tiers.push({
+        name: `cab:${profile.id}`,
+        set: new SubscriptionSet(client, BASE_SUBSCRIPTION_ID + 3, profilePaths(profile)),
+        intervalMs: 0,
+        reads: 0,
+        handle: (values) => {
+          const out: Record<string, CabValue> = {};
+          for (const [key, spec] of fields) out[key] = cabValue(readField(values, spec));
+          this.onUpdate({ cab: { profileId: profile.id, values: out } });
+        },
+      });
+    } else {
+      this.onUpdate({ cab: null });
+    }
+    return tiers;
   }
 }
