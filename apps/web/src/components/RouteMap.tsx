@@ -76,7 +76,7 @@ const STYLE: StyleSpecification = {
       id: "trail",
       type: "line",
       source: "trail",
-      paint: { "line-color": "#f2b33d", "line-width": 4, "line-opacity": 0.75 },
+      paint: { "line-color": "#dfdf00", "line-width": 4, "line-opacity": 0.8 },
       layout: { "line-cap": "round", "line-join": "round" },
     },
     // Icons are drawn on demand (see drawRecordedIcon), so no sprite or glyph server is needed.

@@ -1,6 +1,10 @@
+import { appendFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
+  DwellTimer,
   findProfile,
+  parseGameTimeOfDay,
   resolveProfile,
   profilePaths,
   type CabValue,
@@ -53,11 +57,41 @@ export class TelemetryLoop {
 
   constructor(
     private readonly onUpdate: UpdateListener,
-    private readonly options: { key?: string; baseUrl?: string; log?: (msg: string) => void } = {},
+    private readonly options: { key?: string; baseUrl?: string; log?: (msg: string) => void; traceDir?: string } = {},
   ) {}
 
   private log(msg: string) {
     (this.options.log ?? console.log)(msg);
+  }
+
+  private lastSafety = "";
+
+  /** Appends a timestamped line to a log in the trace folder (diagnostics only). */
+  private trace(file: string, line: string) {
+    const dir = this.options.traceDir;
+    if (!dir) return;
+    try {
+      mkdirSync(dir, { recursive: true });
+      appendFileSync(join(dir, file), `${new Date().toISOString()} ${line}
+`);
+    } catch {
+      // Tracing is a diagnostic aid; never let it affect telemetry.
+    }
+  }
+
+  /**
+   * Notes whenever any AWS/TPWS/DSD value changes, with the raw values the game
+   * reported, so a banner that disagrees with the cab can be checked against
+   * what the game actually said.
+   */
+  private traceSafety(values: Record<string, CabValue>) {
+    const line = Object.entries(values)
+      .filter(([key]) => /^(aws|tpws|dsd|safety)/.test(key))
+      .map(([key, v]) => `${key}=${v}`)
+      .join(" ");
+    if (line === this.lastSafety) return;
+    this.lastSafety = line;
+    this.trace("safety-trace.log", line);
   }
 
   private setConnection(connection: ConnectionState) {
@@ -158,22 +192,40 @@ export class TelemetryLoop {
 
   /** One GET per property, all in flight together (one game tick). Missing ones read null. */
   private async readObjective(client: TswClient, index: number): Promise<ObjectiveState> {
+    const raw: Record<string, unknown> = {};
     const entries = await Promise.all(
       Object.entries(OBJECTIVE_PROPS).map(async ([key, prop]) => {
         const res = await client.get(`Objectives/${index}.${prop}`).catch(() => undefined);
+        raw[key] = res?.Result === "Success" ? res.Values : null;
         return [key, res?.Result === "Success" ? firstValue(res.Values) : null] as const;
       }),
     );
+    // The first read of each objective goes in the trace, with the values exactly as the
+    // game sent them, so scheduled times and timers can be checked against a real service.
+    if (index !== this.tracedObjective) {
+      this.tracedObjective = index;
+      this.trace("objective-trace.log", `objective ${index} ${JSON.stringify(raw)}`);
+    }
     const v = Object.fromEntries(entries) as Record<keyof typeof OBJECTIVE_PROPS, unknown>;
+    const waitTime = clean(v.waitTime);
+    const currentWaitTime = clean(v.currentWaitTime);
+    const rawScheduled = raw.scheduledTime as Record<string, unknown> | null;
     return {
       index,
       kind: typeof v.kind === "string" ? v.kind.replace(/^ObjectiveAction_|BP_C$|_C$/g, "") : "",
-      waitTime: clean(v.waitTime),
-      currentWaitTime: clean(v.currentWaitTime),
+      waitTime,
+      currentWaitTime,
+      waitRemaining: this.dwell.remaining(index, waitTime, currentWaitTime),
       waitForDoorOpen: v.waitForDoorOpen === true,
       waitForDoorClosed: v.waitForDoorClosed === true,
+      // Only trust a scheduled time the game says exists; the API returns {} for times it can't serialise.
+      scheduledTime: v.hasScheduledTime === true ? parseGameTimeOfDay(rawScheduled ?? v.scheduledTime) : null,
+      scheduledIsArrival: v.scheduledIsArrival === true,
     };
   }
+
+  private dwell = new DwellTimer();
+  private tracedObjective: number | null = null;
 
   private createTiers(client: TswClient, connection: ConnectionState, nodeNames: string[]): Tier[] {
     const driveFields = Object.entries(DRIVE_FIELDS) as [keyof DriveState, (typeof DRIVE_FIELDS)[keyof DriveState]][];
@@ -281,6 +333,7 @@ export class TelemetryLoop {
         handle: (values) => {
           const out: Record<string, CabValue> = {};
           for (const [key, spec] of fields) out[key] = cabValue(readField(values, spec));
+          this.traceSafety(out);
           this.onUpdate({ cab: { profileId: profile.id, values: out } });
         },
       });

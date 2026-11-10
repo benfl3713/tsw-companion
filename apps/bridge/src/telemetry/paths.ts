@@ -57,4 +57,7 @@ export const OBJECTIVE_PROPS = {
   currentWaitTime: "Property.CurrentWaitTime",
   waitForDoorOpen: "Property.bWaitForDoorOpen",
   waitForDoorClosed: "Property.bWaitForDoorClosed",
+  hasScheduledTime: "Property.bHasScheduledCompletionTime",
+  scheduledTime: "Property.ScheduledCompletionTime",
+  scheduledIsArrival: "Property.bTreatCompletionTimeAsArrivalTime",
 } as const;

@@ -66,6 +66,11 @@ if (args.demo) {
   console.log("Demo mode: streaming a synthetic route, not the game.");
   runDemo(publish, args.loco);
 } else {
-  loop = new TelemetryLoop(publish, { key: args.key, baseUrl: args.url });
+  loop = new TelemetryLoop(publish, {
+    key: args.key,
+    baseUrl: args.url,
+    // safety-trace.log and objective-trace.log: raw game values, for checking against the cab.
+    traceDir: fileURLToPath(new URL("../data/", import.meta.url)),
+  });
   await loop.run();
 }

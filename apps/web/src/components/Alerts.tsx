@@ -1,7 +1,15 @@
-import { adviseBraking, brakeTargets, DEFAULT_BRAKE_OPTIONS, type Telemetry } from "@tsw/shared";
+import {
+  adviseBraking,
+  brakeTargets,
+  DEFAULT_BRAKE_OPTIONS,
+  doorCue,
+  doorsClosedFrom,
+  formatCountdown,
+  type Telemetry,
+} from "@tsw/shared";
 import { useAlertSound } from "../audio";
 import { useSettings } from "../settings";
-import { dsdWarningActive } from "./cab/SafetyPanel";
+import { awsWarningActive, dsdWarningActive } from "@tsw/shared";
 import { formatDistance, limitIn, toUnit, UNIT_LABEL, type SpeedUnit } from "../units";
 
 const flag = (v: unknown) => v === true || (typeof v === "number" && v !== 0);
@@ -33,7 +41,7 @@ export function Alerts({ t, unit, sound }: { t: Telemetry; unit: SpeedUnit; soun
     : "";
 
   const cab = t.cab?.values;
-  const aws = show.aws && flag(cab?.awsWarning);
+  const aws = show.aws && awsWarningActive(cab);
   const dsd = show.vigilance && (dsdWarningActive(cab) || flag(d?.alerter));
   const brakeDemand = show.brakeDemand && (flag(cab?.safetyBrakeDemand) || flag(cab?.dsdPenalty));
   const slipping = show.wheelslip && d?.isSlipping;
@@ -46,8 +54,29 @@ export function Alerts({ t, unit, sound }: { t: Telemetry; unit: SpeedUnit; soun
   useAlertSound(audible("vigilance"), dsd, "dsd", 700);
   useAlertSound(audible("brakeDemand"), brakeDemand, "urgent", 1500);
 
+  // At a station: counts the dwell down, then asks for the doors to be closed and locked.
+  const cue = show.doors
+    ? doorCue({
+        speed,
+        objective: t.objective,
+        doorsClosed: doorsClosedFrom(cab),
+        leadSeconds: settings.doorLeadSeconds,
+      })
+    : null;
+  const doorsToClose = cue?.stage === "close" || (cue?.stage === "ready" && cue.message.startsWith("Close"));
+  useAlertSound(audible("doors"), doorsToClose, "doors", 6000);
+  useAlertSound(audible("doors"), cue?.stage === "ready" && !doorsToClose, "doors");
+
   return (
     <>
+      {cue?.stage === "open" && <div className="alert advice approach">{cue.message}</div>}
+      {doorsToClose && cue && (
+        <div className="alert advice brake">
+          {cue.message.toUpperCase()}
+          {cue.secondsLeft != null && cue.secondsLeft > 0.5 && <> · depart in {formatCountdown(cue.secondsLeft)}</>}
+        </div>
+      )}
+      {cue?.stage === "ready" && !doorsToClose && <div className="alert advice ready">{cue.message.toUpperCase()}</div>}
       {aws && <div className="alert vigilance">AWS: acknowledge</div>}
       {dsd && <div className="alert vigilance">VIGILANCE: acknowledge</div>}
       {brakeDemand && <div className="alert vigilance">BRAKE DEMAND</div>}
@@ -69,7 +98,9 @@ export function Alerts({ t, unit, sound }: { t: Telemetry; unit: SpeedUnit; soun
       )}
       {level === "urgent" && target && (
         <div className="alert advice urgent">
-          BRAKE HARD for {targetLabel}: {advice!.requiredDecel.toFixed(2)} m/s² needed
+          BRAKE HARD for {targetLabel}
+          {/* Past the stopping margin the rate needed is unbounded, so say so rather than show "Infinity". */}
+          {Number.isFinite(advice!.requiredDecel) ? `: ${advice!.requiredDecel.toFixed(2)} m/s² needed` : ": stop now"}
         </div>
       )}
     </>

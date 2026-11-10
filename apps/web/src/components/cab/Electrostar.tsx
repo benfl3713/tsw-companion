@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { CabValue, DriveState } from "@tsw/shared";
 import { toUnit, UNIT_LABEL } from "../../units";
 import { Gauge } from "./Gauge";
-import { SafetyPanel } from "./SafetyPanel";
+import { AwsIndicator, SafetyPanel } from "./SafetyPanel";
 import { flag, num, type CabDeskProps } from "./TmsDisplay";
 
 // Class 375/377/379/387 (Bombardier Electrostar) desk: analogue speedometer,
@@ -222,13 +222,17 @@ export function Electrostar({ t, drive, unit }: CabDeskProps) {
           <div className="es-gauge-key">
             <span className="red">● MR</span> <span>● BC</span>
           </div>
-          <div className="es-controller" aria-label="Power brake controller">
-            <span className="es-controller-label">Controller</span>
-            <span className={`es-controller-notch ${notch === "EB" ? "eb" : ""}`}>{notch}</span>
+          <div className="es-controls">
+            <div className="es-controller" aria-label="Power brake controller">
+              <span className="es-controller-label">Controller</span>
+              <span className={`es-controller-notch ${notch === "EB" ? "eb" : ""}`}>{notch}</span>
+            </div>
+            {/* The AWS sunflower sits on the desk beside the instruments, as in the cab */}
+            <AwsIndicator values={t.cab?.values} size={96} />
           </div>
         </div>
         <div className="es-safety">
-          <SafetyPanel values={t.cab?.values} />
+          <SafetyPanel values={t.cab?.values} showAws={false} />
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ const ALERTS: { key: AlertKey; label: string; detail: string }[] = [
   { key: "wheelslip", label: "Wheelslip", detail: "Wheels slipping or sliding" },
   { key: "overspeed", label: "Overspeed", detail: "Above the current limit" },
   { key: "braking", label: "Braking advice", detail: "Brake points for lower limits and red signals" },
+  { key: "doors", label: "Door cue", detail: "Close and lock the doors before departure" },
 ];
 
 function Toggle({ on, onChange, label }: { on: boolean; onChange: (on: boolean) => void; label: string }) {
@@ -91,6 +92,21 @@ export function SettingsPanel({ unit, sound, awake, onToggleSound, onClose }: Pr
           </div>
           <Toggle label="Show signal aspects" on={settings.showAspects} onChange={(on) => update({ showAspects: on })} />
         </div>
+
+        <h2>Doors</h2>
+        <label className="settings-slider">
+          <span>
+            Ask for the doors to be closed <b>{settings.doorLeadSeconds}</b> seconds before departure
+          </span>
+          <input
+            type="range"
+            min={5}
+            max={60}
+            step={5}
+            value={settings.doorLeadSeconds}
+            onChange={(e) => update({ doorLeadSeconds: Number(e.target.value) })}
+          />
+        </label>
 
         <h2>Overspeed</h2>
         <label className="settings-slider">

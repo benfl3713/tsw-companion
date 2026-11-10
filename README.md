@@ -81,6 +81,13 @@ To add a loco, run `npm run probe` in its cab, find the values in `apps/bridge/d
 - Overspeed against the current limit.
 - **Braking advice** for the next lower limit or red signal: "Brake in …" shortly before the point where service braking (0.45 m/s²) must start, "BRAKE" once past it, and "BRAKE HARD" when more than 0.8 m/s² is needed. Tuning is in `packages/shared/src/braking.ts`.
 
+**Schedule** (button in the top bar) opens a floating panel that stays up while you drive:
+- **Calling at:** the service's stops from the game's station list, each with its platform, distance and an estimated arrival (`~08:57`). The estimate comes from your speed, the limits ahead and a standard dwell, so it's a guide and not the timetable. In free roam it lists the platforms ahead instead.
+- **Called at:** where you've actually stopped, with arrival and departure on the game clock.
+- **Door timeline** at each station: the dwell counts down, then **Close doors** (starting 20 seconds before departure, adjustable under Settings → Doors), then **Locked**, then **Depart**. The same cue shows as a banner in every view, with a station chime if sound is on, and a dot on the Schedule button when the panel is closed. Where the loco reports its doors (the Electrostar does) it knows when they're already shut.
+
+The game doesn't hand over the timetable's scheduled times in free roam, so early/late running only appears if a service provides them. The bridge writes what the game actually sends for each objective to `apps/bridge/data/objective-trace.log`, and AWS/TPWS/vigilance changes to `safety-trace.log`, to check against the cab.
+
 To read the real signals yourself, turn off **Settings → Signals → Show signal aspects**. The Ahead strip, the next-signal card, the map readout and the ETCS planning area then show where signals are but not their aspect, and braking advice stops planning for red signals (which would give them away). Limit braking advice still works.
 
 Tap **Sound off** in the top bar to enable alert tones on the tablet (browsers only allow sound after a tap, so you may need to tap it again after reloading).

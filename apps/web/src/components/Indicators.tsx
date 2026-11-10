@@ -1,4 +1,4 @@
-import type { ObjectiveState, UpcomingLimit, UpcomingSignal } from "@tsw/shared";
+import { formatCountdown, type ObjectiveState, type TrackStop, type UpcomingLimit, type UpcomingSignal } from "@tsw/shared";
 import { HIDDEN_ASPECT } from "../settings";
 import { formatDistance, limitIn, type SpeedUnit } from "../units";
 
@@ -64,40 +64,47 @@ export function NextSignal({ next, unit }: { next: UpcomingSignal | undefined; u
   );
 }
 
-export function NextStop({ name, distance, unit }: { name: string; distance: number; unit: SpeedUnit }) {
+/** A train describer headcode, e.g. "2K12", on its black plate. */
+export function Headcode({ code }: { code: string }) {
+  return <span className="headcode">{code}</span>;
+}
+
+/** The next stop as a station sign: white on blue, with the platform in its own badge. */
+export function NextStop({ stop, unit }: { stop: TrackStop; unit: SpeedUnit }) {
   return (
-    <section className="card">
-      <h2>Next platform</h2>
-      <div className="col">
-        <span className="stop-name">{name}</span>
-        <span className="distance">{formatDistance(distance, unit)}</span>
+    <section className="card sign-card">
+      <h2>{stop.calling ? "Next stop" : "Next platform"}</h2>
+      <div className="station-sign">
+        <span className="station-name">{stop.name}</span>
+        {stop.platform && (
+          <span className="platform-badge" aria-label={`Platform ${stop.platform}`}>
+            {stop.platform}
+          </span>
+        )}
       </div>
+      <span className="distance">{formatDistance(Math.max(stop.distance, 0), unit)}</span>
     </section>
   );
 }
 
-function formatSeconds(s: number) {
-  const m = Math.floor(s / 60);
-  return `${m}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-}
-
 /**
- * Service name and the current objective's dwell countdown and door waits.
- * The API doesn't expose timetable times, so there's no early/late here.
+ * Service headcode and the current stop's dwell countdown and door waits. The
+ * game's CurrentWaitTime can count either way; the bridge works out the seconds left.
  */
 export function ServiceCard({ serviceName, objective }: { serviceName: string | null; objective: ObjectiveState | null }) {
   if (!serviceName && !objective) return null;
   const waiting = objective?.waitTime != null && objective.waitTime > 0;
-  const remaining = waiting ? Math.max(0, objective!.waitTime! - (objective!.currentWaitTime ?? 0)) : null;
+  const remaining = waiting ? objective!.waitRemaining : null;
   return (
     <section className="card">
       <h2>Service</h2>
       <div className="col">
-        {serviceName && <span className="stop-name">{serviceName}</span>}
-        {remaining != null && (
-          <span className="distance">
-            Dwell {formatSeconds(remaining)}
-            {remaining === 0 && <span className="ok-text"> · Ready to depart</span>}
+        {serviceName && <span className="service-name">{serviceName}</span>}
+        {waiting && (
+          <span className="fig-row">
+            <span className="muted small">Dwell</span>
+            <span className="fig">{remaining != null ? formatCountdown(remaining) : "--:--"}</span>
+            {remaining === 0 && <span className="ok-text"> Ready to depart</span>}
           </span>
         )}
         {objective?.waitForDoorOpen && <span className="warn">Open the doors</span>}

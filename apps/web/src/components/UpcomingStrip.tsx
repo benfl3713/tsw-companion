@@ -86,10 +86,11 @@ export function UpcomingStrip({ driverAid, track, unit }: Props) {
 
   const signals = (driverAid?.signals ?? []).map((s) => ({ ...s, distance: ahead(s.distance) })).filter((s) => inView(s.distance));
   const limits = (driverAid?.limits ?? []).map((l) => ({ ...l, distance: ahead(l.distance) })).filter((l) => l.distance >= 0);
-  const platforms = (track?.markers ?? [])
-    .filter((m) => m.type === "Platform")
-    .map((m) => ({ ...m, distance: ahead(m.distance) }))
-    .filter((m) => m.distance + m.platformLength >= 0 && m.distance <= range);
+  // One entry per stop, with its platform; the station list and platform markers used to show as two.
+  const platforms = (track?.stops ?? [])
+    .filter((s) => s.type === "Platform")
+    .map((s) => ({ ...s, distance: ahead(s.distance) }))
+    .filter((s) => s.distance + s.platformLength >= 0 && s.distance <= range);
 
   // Permitted speed as steps: current limit until the first change, and so on.
   const steps: { from: number; to: number; limit: number | null }[] = [];
@@ -138,7 +139,7 @@ export function UpcomingStrip({ driverAid, track, unit }: Props) {
           <line x1={TRACK_X} x2={TRACK_X} y1={TOP_PAD} y2={bottom} className="strip-track" />
 
           {platforms.map((p) => (
-            <g key={`${p.name}-${p.platformLength}`}>
+            <g key={`${p.name}-${p.platform}-${p.platformLength}`}>
               <rect
                 x={TRACK_X + 4}
                 width={8}
@@ -148,6 +149,7 @@ export function UpcomingStrip({ driverAid, track, unit }: Props) {
               />
               <text x={TRACK_X + 16} y={y(Math.max(p.distance, 0)) - 2} className="strip-label platform">
                 {p.name}
+                {p.platform && <tspan className="strip-platform-no"> {p.platform}</tspan>}
               </text>
             </g>
           ))}

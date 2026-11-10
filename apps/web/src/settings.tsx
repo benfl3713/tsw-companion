@@ -3,7 +3,7 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 // Per-device preferences, kept in this browser's localStorage. Each tablet
 // or phone can be set up differently.
 
-export type AlertKey = "aws" | "vigilance" | "brakeDemand" | "wheelslip" | "overspeed" | "braking";
+export type AlertKey = "aws" | "vigilance" | "brakeDemand" | "wheelslip" | "overspeed" | "braking" | "doors";
 
 export interface Settings {
   /** Which banners to show. */
@@ -14,6 +14,8 @@ export interface Settings {
   overspeedTolerance: number;
   /** "countdown" also shows "Brake in …" before the brake point. */
   brakingAdvice: "countdown" | "brake-points";
+  /** Start asking for the doors to be closed this many seconds before departure. */
+  doorLeadSeconds: number;
   /** Normal service braking rate the advice plans with, m/s². */
   comfortDecel: number;
   /** Above this the advice says "BRAKE HARD", m/s². */
@@ -39,6 +41,7 @@ const ALL_ON: Record<AlertKey, boolean> = {
   wheelslip: true,
   overspeed: true,
   braking: true,
+  doors: true,
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -46,6 +49,7 @@ export const DEFAULT_SETTINGS: Settings = {
   sounds: { ...ALL_ON },
   overspeedTolerance: 1,
   brakingAdvice: "countdown",
+  doorLeadSeconds: 20,
   comfortDecel: 0.45,
   urgentDecel: 0.8,
   dmiPlanning: true,

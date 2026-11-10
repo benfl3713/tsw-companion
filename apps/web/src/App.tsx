@@ -1,19 +1,29 @@
 import { useRef, useState } from "react";
-import { PROFILES, type DriveState, type Telemetry } from "@tsw/shared";
+import {
+  awsWarningActive,
+  doorCue,
+  doorsClosedFrom,
+  dsdWarningActive,
+  PROFILES,
+  type DriveState,
+  type Telemetry,
+} from "@tsw/shared";
 import { AnalogueEmu } from "./components/cab/AnalogueEmu";
 import { DesiroCity } from "./components/cab/DesiroCity";
 import { Electrostar } from "./components/cab/Electrostar";
 import { HitachiAt300 } from "./components/cab/HitachiAt300";
 import { Alerts } from "./components/Alerts";
-import { dsdWarningActive } from "./components/cab/SafetyPanel";
 import { useSound } from "./audio";
+import { SchedulePanel } from "./components/SchedulePanel";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { useStopHistory } from "./stopHistory";
 import { useFullscreen, useKeepAwake } from "./device";
 import { useSettings, visibleDriverAid } from "./settings";
 import {
   aspectColour,
   Bar,
   CurrentLimit,
+  Headcode,
   Gradient,
   LimitSign,
   NextLimit,
@@ -125,7 +135,6 @@ function StatusScreen({ state }: { state: StoreState }) {
   }
   return (
     <div className="status-screen">
-      <div className="spinner" aria-hidden />
       <h1>{title}</h1>
       <p>{detail}</p>
     </div>
@@ -157,13 +166,23 @@ export function App() {
   // signals keep their positions but not what they show.
   const t: Telemetry = { ...state.data, driverAid: visibleDriverAid(state.data.driverAid, settings.showAspects) };
   const ranges = useSeenRanges(t.loco?.objectClass, t.drive);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const stopHistory = useStopHistory(t);
+  // A badge on the Schedule button when the doors want attention, even with the panel closed.
+  const doorStage = doorCue({
+    speed: t.drive?.speed ?? 0,
+    objective: t.objective,
+    doorsClosed: doorsClosedFrom(t.cab?.values),
+    leadSeconds: settings.doorLeadSeconds,
+  }).stage;
 
   const header = (
     <header className="topbar">
-      <span className={`dot ${state.link === "open" && t.connection.status === "connected" ? "ok" : "bad"}`} />
-      <span className="loco">{t.loco ? prettyLoco(t.loco.objectClass) : "TSW Companion"}</span>
-      {t.position?.serviceName && <span className="muted">{t.position.serviceName}</span>}
-      <span className="spacer" />
+      <div className="topbar-id">
+        <span className={`dot ${state.link === "open" && t.connection.status === "connected" ? "ok" : "bad"}`} />
+        {t.position?.serviceName && <Headcode code={t.position.serviceName} />}
+        <span className="loco">{t.loco ? prettyLoco(t.loco.objectClass) : "TSW Companion"}</span>
+      </div>
       <div className="segmented" role="tablist">
         {VIEWS.map((v) => (
           <button key={v} role="tab" aria-selected={view === v} className={view === v ? "on" : ""} onClick={() => setView(v)}>
@@ -171,7 +190,17 @@ export function App() {
           </button>
         ))}
       </div>
-      <span className="clock">{formatClock(t.world?.localTimeIso)}</span>
+      <span className="spacer" />
+      <button
+        className={`unit-toggle schedule-btn ${scheduleOpen ? "on" : ""}`}
+        onClick={() => setScheduleOpen((o) => !o)}
+        aria-pressed={scheduleOpen}
+        title="Schedule and door timings"
+      >
+        Schedule
+        {(doorStage === "close" || doorStage === "ready") && <span className="badge-dot" aria-label="Doors" />}
+      </button>
+      <span className="fig clock">{formatClock(t.world?.localTimeIso)}</span>
       <span className="muted small" title="Drive updates per second">
         {state.driveHz} Hz
       </span>
@@ -218,7 +247,7 @@ export function App() {
   const d = t.drive;
   const aid = t.driverAid;
   const limit = limitIn(aid?.speedLimit, unit);
-  const nextStop = t.track?.markers.find((m) => m.type === "Platform" && m.distance > 0);
+  const nextStop = t.track?.stops.find((s) => s.type === "Platform" && s.distance > -30);
   const maxSpeed = aid?.formationMaxSpeed ?? (d.maxPermittedSpeed || null) ?? aid?.trackMaxSpeed ?? null;
   const target = d.speedControlTarget ? Math.round(toUnit(d.speedControlTarget, unit)) : null;
 
@@ -232,7 +261,7 @@ export function App() {
   // Text for the ETCS display's message area, most urgent first.
   const cabValues = t.cab?.values;
   const cabMessage =
-    cabValues?.awsWarning
+    awsWarningActive(cabValues)
       ? "AWS: acknowledge"
       : dsdWarningActive(cabValues) || d.alerter
         ? "Vigilance: acknowledge"
@@ -245,6 +274,7 @@ export function App() {
   return (
     <div className="app">
       {header}
+      {scheduleOpen && <SchedulePanel t={t} unit={unit} history={stopHistory} onClose={() => setScheduleOpen(false)} />}
       <div className="alerts">
         <Alerts t={t} unit={unit} sound={sound} />
       </div>
@@ -329,7 +359,7 @@ export function App() {
             <NextLimit next={aid?.limits[0]} unit={unit} />
             <NextSignal next={aid?.signals[0]} unit={unit} />
             {nextStop ? (
-              <NextStop name={nextStop.name} distance={nextStop.distance} unit={unit} />
+              <NextStop stop={nextStop} unit={unit} />
             ) : (
               <Gradient gradient={aid?.gradient ?? 0} />
             )}

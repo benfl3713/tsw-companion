@@ -1,17 +1,22 @@
 :root {
-  --bg: #0b0d10;
-  --panel: #14181d;
-  --panel-2: #1b2027;
-  --line: #2a313a;
-  --text: #e8edf2;
-  --muted: #8a96a3;
-  --accent: #f2b33d;
-  --ok: #3ccf7a;
-  --bad: #ef4b4b;
-  --yellow: #ffcc33;
-  --needle: #f2f5f7;
+  /* The ETCS DMI palette (ERA spec) across the whole app, so every screen reads like the cab displays:
+     one dark-blue ground, greys for structure, and yellow / orange / red only where they mean something. */
+  --bg: #031122;
+  --panel: #031122;
+  --panel-2: #0a1c33;
+  --line: #555555;
+  --text: #ffffff;
+  --grey: #c3c3c3;
+  --muted: #969696;
+  --accent: #dfdf00;
+  --ok: #34b45f;
+  --bad: #e03a3a;
+  --yellow: #dfdf00;
+  --orange: #ea9100;
+  --needle: #c3c3c3;
   color-scheme: dark;
-  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  /* Rail Alphabet where installed; Helvetica Neue (iPad, Mac) or Arial otherwise, as on the DMI. */
+  font-family: "Rail Alphabet 2", "Frutiger", "Helvetica Neue", Arial, system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -54,46 +59,98 @@ textarea {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-/* Top bar */
+/* Top bar: one ruled strip, like the header of a driver display */
 .topbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--line);
   font-size: 15px;
 }
+.topbar-id {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .topbar .loco {
-  font-weight: 600;
+  color: var(--muted);
 }
 .topbar .spacer {
   flex: 1;
 }
-.clock {
+/* The headcode in a plain field, as the DMI draws data entries */
+.headcode {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* Figures: plain bold numerals, aligned in columns */
+.fig {
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+.fig.big {
+  font-size: 34px;
+  line-height: 1;
+}
+.fig.small {
+  font-size: 14px;
+}
+.fig-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.clock {
   font-size: 18px;
-  font-weight: 600;
 }
 .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--muted);
 }
 .dot.ok {
   background: var(--ok);
-  box-shadow: 0 0 8px var(--ok);
 }
 .dot.bad {
   background: var(--bad);
 }
+
+/* Buttons: flat bordered keys; the selected one is inverted */
 .unit-toggle {
-  background: var(--panel-2);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: transparent;
+  color: var(--grey);
+  border: 1px solid var(--muted);
+  border-radius: 0;
   padding: 6px 12px;
   font: inherit;
+  font-size: 14px;
   min-width: 64px;
+  position: relative;
+}
+.unit-toggle:active {
+  background: var(--line);
+}
+.unit-toggle.on {
+  background: var(--grey);
+  border-color: var(--grey);
+  color: #000;
+}
+.unit-toggle.off {
+  color: var(--muted);
+}
+.badge-dot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 11px;
+  height: 11px;
+  background: var(--orange);
+  animation: flash 0.9s steps(2) infinite;
 }
 
 .muted {
@@ -104,16 +161,22 @@ textarea {
 }
 .warn {
   color: var(--yellow);
-  font-weight: 600;
+  font-weight: 700;
+}
+.ok-text {
+  color: var(--ok);
 }
 
-/* Alerts */
+/* Alerts: solid bars. Yellow = indication, orange = overspeed, red = intervention. */
+.alerts {
+  display: flex;
+  flex-direction: column;
+}
 .alert {
   text-align: center;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 10px;
-  font-size: 20px;
+  padding: 8px;
+  font-size: 19px;
 }
 .alert.vigilance {
   background: var(--bad);
@@ -124,35 +187,30 @@ textarea {
   color: #000;
 }
 .alert.overspeed {
-  background: var(--bad);
+  background: var(--orange);
+  color: #000;
 }
 .alert.advice {
-  font-size: 18px;
-  letter-spacing: 0.02em;
-  padding: 8px;
+  font-size: 17px;
+  padding: 7px;
 }
 .alert.advice.approach {
-  background: #3a2f12;
+  background: var(--panel-2);
+  border-bottom: 2px solid var(--yellow);
   color: var(--yellow);
 }
 .alert.advice.brake {
-  background: var(--accent);
-  color: #111;
+  background: var(--orange);
+  color: #000;
+}
+.alert.advice.ready {
+  background: var(--panel-2);
+  border-bottom: 2px solid var(--ok);
+  color: var(--ok);
 }
 .alert.advice.urgent {
   background: var(--bad);
   animation: flash 0.6s steps(2) infinite;
-}
-.alerts {
-  display: flex;
-  flex-direction: column;
-}
-.unit-toggle.off {
-  color: var(--muted);
-}
-.ok-text {
-  color: var(--ok);
-  font-size: 15px;
 }
 @keyframes flash {
   50% {
@@ -166,8 +224,8 @@ textarea {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) 220px;
-  gap: 16px;
-  padding: 16px;
+  gap: 8px;
+  padding: 8px;
 }
 @media (orientation: portrait), (max-width: 760px) {
   .panel {
@@ -186,26 +244,28 @@ textarea {
   display: none !important;
 }
 
-/* View switcher */
+/* View switcher: bordered keys side by side */
 .segmented {
   display: flex;
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 2px;
 }
 .segmented button {
-  background: none;
-  border: 0;
-  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--muted);
+  margin-left: -1px;
+  color: var(--grey);
   font: inherit;
-  padding: 5px 14px;
-  border-radius: 6px;
+  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 0;
+}
+.segmented button:first-child {
+  margin-left: 0;
 }
 .segmented button.on {
-  background: var(--accent);
-  color: #111;
-  font-weight: 600;
+  background: var(--grey);
+  border-color: var(--grey);
+  color: #000;
+  font-weight: 700;
 }
 
 /* Map view */
@@ -214,8 +274,8 @@ textarea {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 220px;
-  gap: 16px;
-  padding: 16px;
+  gap: 8px;
+  padding: 8px;
 }
 @media (orientation: portrait), (max-width: 760px) {
   .map-view {
@@ -234,31 +294,34 @@ textarea {
 .map {
   position: absolute;
   inset: 0;
-  border-radius: 12px;
   overflow: hidden;
+}
+.map-wrap {
+  border: 1px solid var(--line);
 }
 .map-controls {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
   max-width: 60%;
 }
 .chip {
-  background: rgba(20, 24, 29, 0.9);
-  color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 6px 12px;
+  background: var(--bg);
+  color: var(--grey);
+  border: 1px solid var(--muted);
+  border-radius: 0;
+  padding: 5px 10px;
   font: inherit;
   font-size: 13px;
 }
 .chip.on {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--grey);
+  border-color: var(--grey);
+  color: #000;
 }
 .map-empty {
   position: absolute;
@@ -268,15 +331,15 @@ textarea {
   color: var(--muted);
   pointer-events: none;
 }
-.map-hud {
+.card.map-hud {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(20, 24, 29, 0.92);
-  backdrop-filter: blur(4px);
+  background: var(--bg);
+  border-color: var(--muted);
 }
 .hud-speed {
   font-size: 34px;
@@ -285,28 +348,27 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 .hud-speed.over {
-  color: var(--bad);
+  color: var(--orange);
 }
 .hud-distance {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+/* The train on the map is just a heading arrow */
 .train-marker {
   width: 30px;
   height: 30px;
-  border-radius: 50%;
-  background: rgba(242, 179, 61, 0.25);
-  border: 2px solid var(--accent);
   display: grid;
   place-items: center;
 }
 .train-arrow {
   width: 0;
   height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-bottom: 14px solid var(--accent);
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 18px solid var(--yellow);
+  filter: drop-shadow(0 0 1px #000);
   transform-origin: 50% 60%;
 }
 .maplibregl-ctrl-attrib {
@@ -324,7 +386,7 @@ textarea {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: flex-end;
 }
@@ -332,12 +394,12 @@ textarea {
   width: min(480px, 100%);
   height: 100%;
   overflow-y: auto;
-  background: var(--panel);
-  border-left: 1px solid var(--line);
-  padding: 16px 20px 24px;
+  background: var(--bg);
+  border-left: 1px solid var(--muted);
+  padding: 12px 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .sheet-head {
   display: flex;
@@ -349,11 +411,11 @@ textarea {
   font-size: 20px;
 }
 .sheet h2 {
-  margin: 14px 0 2px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  margin: 12px 0 2px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 400;
   color: var(--muted);
 }
 .settings-table {
@@ -365,7 +427,7 @@ textarea {
   grid-template-columns: minmax(0, 1fr) 56px 56px;
   align-items: center;
   gap: 8px;
-  padding: 8px 0;
+  padding: 7px 0;
   border-bottom: 1px solid var(--line);
 }
 .settings-row.single {
@@ -380,29 +442,27 @@ textarea {
 .settings-row.header span {
   text-align: center;
 }
+/* On/off key: a square knob in a flat frame, filled grey when on */
 .switch {
   justify-self: center;
-  width: 46px;
-  height: 26px;
-  border-radius: 13px;
-  border: 1px solid var(--line);
-  background: var(--panel-2);
-  padding: 2px;
+  width: 48px;
+  height: 28px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  padding: 3px;
   display: flex;
 }
 .switch span {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
   background: var(--muted);
-  transition: transform 0.15s;
 }
 .switch.on {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--grey);
+  border-color: var(--grey);
 }
 .switch.on span {
-  background: #111;
+  background: #000;
   transform: translateX(20px);
 }
 .settings-slider {
@@ -413,7 +473,7 @@ textarea {
 }
 .settings-slider input {
   width: 100%;
-  accent-color: var(--accent);
+  accent-color: var(--grey);
 }
 .segmented.wide {
   align-self: flex-start;
@@ -432,9 +492,8 @@ textarea {
   flex: 1;
   min-height: 0;
   display: flex;
-  gap: 12px;
-  padding: 12px;
-  background: #050607;
+  gap: 8px;
+  padding: 8px;
 }
 /* The Ahead strip sits beside the desk as a narrow column. */
 .cab-view > .strip {
@@ -473,17 +532,15 @@ textarea {
   }
 }
 
-/* ETCS DMI: a 4:3 screen in a black bezel */
+/* ETCS DMI: the 4:3 screen, framed by a plain rule */
 .dmi {
-  /* Bezel hugs the 4:3 screen rather than letterboxing it. */
   width: 100%;
   height: auto;
   aspect-ratio: 4 / 3;
   max-height: calc(100vh - 110px);
   align-self: center;
   justify-self: center;
-  border: 8px solid #000;
-  border-radius: 10px;
+  border: 1px solid var(--muted);
   background: #031122;
 }
 
@@ -500,7 +557,7 @@ textarea {
   align-items: center;
   gap: 12px;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--at-panel);
   border: 1px solid var(--at-line);
   font-size: 14px;
@@ -514,12 +571,12 @@ textarea {
 .tms-formation i {
   width: 14px;
   height: 10px;
-  border-radius: 2px;
+  border-radius: 0;
   background: var(--at-line);
 }
 .tms-formation i.lead {
   background: var(--at-text);
-  border-radius: 6px 2px 2px 6px;
+  border-radius: 0;
 }
 .tms-speedset {
   color: var(--yellow);
@@ -537,8 +594,8 @@ textarea {
   flex-direction: column;
   background: #d9dde2;
   color: #111;
-  border: 8px solid #1a1c1f;
-  border-radius: 10px;
+  border: 1px solid var(--muted);
+  border-radius: 0;
   min-height: 0;
   overflow: hidden;
   font-family: Arial, Helvetica, sans-serif;
@@ -556,11 +613,11 @@ textarea {
   font-weight: 700;
   color: #1d3f7a;
   background: #e9edf2;
-  border-radius: 3px;
+  border-radius: 0;
   padding: 2px 0;
 }
 .mitrac-formation span.lead {
-  border-radius: 10px 3px 3px 10px;
+  border-radius: 0;
 }
 .mitrac-title {
   margin: 0;
@@ -605,7 +662,7 @@ textarea {
 .mitrac-car {
   background: #fff;
   border: 1px solid #8f9aa6;
-  border-radius: 4px;
+  border-radius: 0;
   padding: 6px;
   font-size: 12px;
   font-weight: 700;
@@ -619,7 +676,7 @@ textarea {
   flex: 1;
   height: 14px;
   background: #0a7a2f;
-  border-radius: 2px;
+  border-radius: 0;
 }
 .mitrac-door-row i.open {
   background: #d68400;
@@ -646,7 +703,7 @@ textarea {
 .mitrac-door i {
   width: 28px;
   height: 16px;
-  border-radius: 2px;
+  border-radius: 0;
   background: #0a7a2f;
 }
 .mitrac-door i.open {
@@ -711,7 +768,7 @@ textarea {
   color: #111;
   background: #f2f4f6;
   border: 1px solid #8f9aa6;
-  border-radius: 4px;
+  border-radius: 0;
 }
 .mitrac-tabs button.on {
   background: #fff;
@@ -726,8 +783,8 @@ textarea {
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 12px;
   padding: 14px;
-  background: linear-gradient(#2b2f35, #1c1f23);
-  border-radius: 14px;
+  background: #23272c;
+  border-radius: 0;
   border: 1px solid #000;
   min-height: 0;
 }
@@ -768,7 +825,7 @@ textarea {
   color: #ffb000;
   background: #000;
   border: 2px solid #333;
-  border-radius: 6px;
+  border-radius: 0;
   padding: 4px 10px;
 }
 .es-controller-notch.eb {
@@ -832,9 +889,9 @@ textarea {
   gap: 16px;
   align-items: center;
   min-height: 0;
-  background: radial-gradient(circle at 30% 30%, #1b2027, #0f1215);
+  background: #06101e;
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 16px;
 }
 .analogue-speedo {
@@ -859,30 +916,61 @@ textarea {
   gap: 16px;
   background: #0a0c0e;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 10px 14px;
 }
-.safety-aws {
+/* AWS indicator: the black "sunflower" disc, yellow-and-black after a caution */
+.aws-indicator {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  min-width: 96px;
+}
+.aws-caption {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+.aws-state {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.aws-state.caution {
+  color: #ffd400;
+}
+.aws-state.warn {
+  color: var(--bad);
+  animation: flash 0.6s steps(2) infinite;
 }
 .sunflower {
-  width: 56px;
-  height: 56px;
 }
 .sf-rim {
-  fill: #000;
-  stroke: #555;
-  stroke-width: 2;
+  fill: #1b1f24;
+  stroke: #566069;
+  stroke-width: 1.5;
 }
-.sf-a,
-.sf-b {
-  fill: #111;
+.sf-disc {
+  fill: #050505;
 }
-.sunflower.on .sf-a {
+.sf-spoke {
+  fill: #0d0d0d;
+}
+.sunflower.on .sf-spoke:nth-of-type(odd) {
   fill: #ffd400;
+}
+.sf-hub {
+  fill: #000;
+  stroke: #2a2f35;
+}
+.sunflower.warning .sf-rim {
+  stroke: var(--bad);
+  stroke-width: 3;
+  animation: flash 0.6s steps(2) infinite;
 }
 .safety-lamps {
   display: grid;
@@ -911,11 +999,9 @@ textarea {
 }
 .lamp.red.lit .lamp-dot {
   background: var(--bad);
-  box-shadow: 0 0 10px var(--bad);
 }
 .lamp.amber.lit .lamp-dot {
   background: var(--accent);
-  box-shadow: 0 0 10px var(--accent);
 }
 .lamp.flash .lamp-dot {
   animation: flash 0.6s steps(2) infinite;
@@ -931,8 +1017,8 @@ textarea {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   gap: 16px;
   background: var(--at-bg);
-  border: 6px solid #05080c;
-  border-radius: 14px;
+  border: 1px solid var(--muted);
+  border-radius: 0;
   padding: 16px;
   color: var(--at-text);
   min-height: 0;
@@ -959,7 +1045,7 @@ textarea {
   font-size: 18px;
   font-weight: 700;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: 0;
   background: #000;
   color: #ffb000;
   font-family: ui-monospace, Consolas, monospace;
@@ -1005,7 +1091,7 @@ textarea {
 .at-tile {
   text-align: center;
   padding: 8px 4px;
-  border-radius: 6px;
+  border-radius: 0;
   font-size: 13px;
   font-weight: 600;
   border: 1px solid var(--at-line);
@@ -1046,7 +1132,7 @@ textarea {
   flex-direction: column;
   background: var(--at-panel);
   border: 1px solid var(--at-line);
-  border-radius: 4px;
+  border-radius: 0;
   overflow: hidden;
 }
 .at-demand-half {
@@ -1085,7 +1171,7 @@ textarea {
   gap: 10px;
   background: var(--at-panel);
   border: 1px solid var(--at-line);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px 12px;
 }
 .at-pressures h3 {
@@ -1109,7 +1195,7 @@ textarea {
 .at-pressure-track {
   height: 12px;
   background: #0a1422;
-  border-radius: 3px;
+  border-radius: 0;
   overflow: hidden;
 }
 .at-pressure-fill {
@@ -1136,7 +1222,6 @@ textarea {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding-bottom: 4px;
 }
 .strip-head {
   display: flex;
@@ -1165,27 +1250,29 @@ textarea {
   font-size: 11px;
 }
 .strip-track {
-  stroke: var(--muted);
+  stroke: var(--grey);
   stroke-width: 3;
 }
 .strip-profile {
   fill: none;
-  stroke: var(--accent);
+  stroke: var(--yellow);
   stroke-width: 2;
-  opacity: 0.8;
 }
 .strip-platform {
-  fill: #3b82f6;
-  opacity: 0.85;
+  fill: var(--muted);
 }
 .strip-label {
   fill: var(--text);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .strip-label.platform {
-  fill: #93c5fd;
+  fill: var(--text);
+}
+.strip-platform-no {
+  fill: var(--grey);
+  font-weight: 400;
 }
 .strip-limit {
   fill: #fff;
@@ -1202,11 +1289,11 @@ textarea {
   stroke-width: 1.5;
 }
 .strip-signal-body {
-  fill: #050607;
-  stroke: var(--line);
+  fill: #000;
+  stroke: var(--muted);
 }
 .strip-aspect {
-  fill: #444;
+  fill: #555;
 }
 .strip-aspect.red {
   fill: var(--bad);
@@ -1230,7 +1317,7 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 .strip-train {
-  fill: var(--accent);
+  fill: var(--yellow);
 }
 .speedo-wrap {
   display: flex;
@@ -1252,28 +1339,26 @@ textarea {
 .side {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   min-height: 0;
   overflow-y: auto;
 }
 .grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
 }
 
+/* Panes: an outlined area with a quiet label, as the DMI divides its screen */
 .card {
-  background: var(--panel);
+  background: transparent;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px 14px;
+  padding: 8px 10px;
 }
 .card h2 {
-  margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--muted);
 }
 .row {
@@ -1288,15 +1373,53 @@ textarea {
 }
 .distance {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .stop-name {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
+}
+/* Next stop: station name and platform, plain */
+.sign-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.station-sign {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.station-name {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+.platform-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+}
+.platform-badge.small {
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  font-size: 12px;
+  vertical-align: middle;
+}
+.service-name {
+  font-size: 20px;
+  font-weight: 700;
 }
 
-/* Speedometer */
+/* Speedometer: a flat dial, grey arc and white graduations */
 .speedo {
   width: 100%;
   max-height: 100%;
@@ -1304,14 +1427,13 @@ textarea {
 }
 .dial-track {
   fill: none;
-  stroke: var(--panel-2);
+  stroke: var(--line);
   stroke-width: 6;
 }
 .dial-over {
   fill: none;
   stroke: var(--bad);
   stroke-width: 6;
-  opacity: 0.7;
 }
 .tick {
   stroke: var(--muted);
@@ -1329,15 +1451,13 @@ textarea {
   fill: var(--bad);
 }
 .target-marker {
-  fill: var(--accent);
+  fill: var(--yellow);
 }
 .needle {
   fill: var(--needle);
-  transition: fill 0.2s;
 }
 .hub {
-  fill: var(--panel-2);
-  stroke: var(--line);
+  fill: var(--grey);
 }
 .readout {
   fill: var(--text);
@@ -1350,13 +1470,13 @@ textarea {
   font-size: 11px;
 }
 .speedo.overspeed .needle {
-  fill: var(--bad);
+  fill: var(--orange);
 }
 .speedo.overspeed .readout {
-  fill: var(--bad);
+  fill: var(--orange);
 }
 
-/* UK-style limit sign */
+/* UK-style limit sign: a real sign, so it keeps its look */
 .limit-sign {
   display: grid;
   place-items: center;
@@ -1380,33 +1500,30 @@ textarea {
   border-width: 5px;
 }
 
-/* Signal head */
+/* Signal head: round lamps on black, lit by aspect */
 .signal-head {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: #050607;
-  padding: 5px;
-  border-radius: 8px;
+  background: #000;
+  border: 1px solid var(--muted);
+  padding: 4px;
 }
 .signal-head i {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #222;
+  background: #333;
 }
 .signal-head.red i:last-child {
   background: var(--bad);
-  box-shadow: 0 0 10px var(--bad);
 }
 .signal-head.yellow i:last-child,
 .signal-head.double-yellow i {
   background: var(--yellow);
-  box-shadow: 0 0 10px var(--yellow);
 }
 .signal-head.green i:last-child {
   background: var(--ok);
-  box-shadow: 0 0 10px var(--ok);
 }
 
 /* Gradient */
@@ -1433,13 +1550,13 @@ textarea {
 .controls {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .bar-head {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 .bar-value {
   font-variant-numeric: tabular-nums;
@@ -1447,17 +1564,15 @@ textarea {
 }
 .bar-track {
   height: 10px;
-  background: var(--panel-2);
-  border-radius: 5px;
-  overflow: hidden;
+  border: 1px solid var(--line);
 }
 .bar-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--grey);
   transition: width 60ms linear;
 }
 
-/* Status screen */
+/* Status screen: text only */
 .status-screen {
   flex: 1;
   display: flex;
@@ -1470,22 +1585,275 @@ textarea {
 }
 .status-screen h1 {
   font-size: 24px;
-  margin: 12px 0 0;
+  margin: 0;
 }
 .status-screen p {
   color: var(--muted);
   max-width: 420px;
 }
-.spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--line);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+
+/* Schedule: floats over the view without dimming it, so it can stay up while driving */
+.schedule-pop {
+  position: fixed;
+  top: 52px;
+  right: 8px;
+  z-index: 40;
+  width: min(400px, calc(100vw - 16px));
+  max-height: calc(100% - 64px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--muted);
 }
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+.schedule-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px 6px 10px;
+  border-bottom: 1px solid var(--muted);
+}
+.schedule-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.clock-fig {
+  font-size: 18px;
+}
+.schedule-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 10px 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.schedule-foot {
+  padding: 6px 10px 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+.sched-now {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.sched-now-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sched-kicker {
+  font-size: 13px;
+  color: var(--muted);
+}
+.sched-station {
+  font-size: 17px;
+  font-weight: 700;
+}
+.sched-count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 6px 0 8px;
+  flex-wrap: wrap;
+}
+.chip-late {
+  margin-left: auto;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.chip-late.ok {
+  background: var(--ok);
+  color: #000;
+}
+.chip-late.warn {
+  background: var(--yellow);
+  color: #000;
+}
+.chip-late.late {
+  background: var(--bad);
+  color: #fff;
+}
+
+/* Door sequence: open -> close -> locked -> depart */
+.door-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.door-steps li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 2px;
+  font-size: 12px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  text-align: center;
+}
+.step-dot {
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--muted);
+}
+.door-steps li.done {
+  color: var(--grey);
+}
+.door-steps li.done .step-dot {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+.door-steps li.now {
+  color: var(--yellow);
+  border-color: var(--yellow);
+  font-weight: 700;
+}
+.door-steps li.now .step-dot {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  animation: flash 0.9s steps(2) infinite;
+}
+.door-steps li.now.go {
+  color: var(--ok);
+  border-color: var(--ok);
+}
+.door-steps li.now.go .step-dot {
+  background: var(--ok);
+  border-color: var(--ok);
+}
+.door-message {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.door-message.close {
+  color: var(--yellow);
+}
+.door-message.ready {
+  color: var(--ok);
+}
+
+/* Calling points as a line diagram */
+.sched-heading {
+  margin: 10px 0 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+}
+.sched-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sched-list li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  align-items: center;
+  column-gap: 8px;
+  min-height: 38px;
+  font-size: 15px;
+}
+.sched-line {
+  align-self: stretch;
+  position: relative;
+}
+.sched-line::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--muted);
+}
+.sched-list li:first-child .sched-line::before {
+  top: 50%;
+}
+.sched-list li:last-child .sched-line::before {
+  bottom: 50%;
+}
+.sched-line i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: var(--bg);
+  border: 2px solid var(--grey);
+}
+.sched-list li.next .sched-line i {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  background: var(--yellow);
+  border-color: var(--yellow);
+}
+.sched-list li.next .sched-name {
+  font-weight: 700;
+}
+.sched-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sched-dist {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sched-eta {
+  min-width: 64px;
+  text-align: right;
+}
+.sched-list.called {
+  color: var(--grey);
+}
+.sched-list.called .sched-line::before {
+  background: var(--line);
+}
+.sched-list.called .sched-line i {
+  border-color: var(--line);
+}
+
+/* Controller and AWS sunflower side by side under the brake gauge */
+.es-controls {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+}
+
+/* Narrow screens (iPad portrait, phones): drop the loco name and update rate to keep the controls on one row */
+@media (max-width: 900px) {
+  .topbar {
+    gap: 8px;
+    padding: 8px 10px;
   }
+  .topbar .loco,
+  .topbar > .muted.small {
+    display: none;
+  }
+  .unit-toggle {
+    min-width: 0;
+    padding: 6px 9px;
+  }
+}
+
+.fig-row .fig {
+  font-size: 22px;
 }

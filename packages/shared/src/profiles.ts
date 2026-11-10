@@ -39,7 +39,12 @@ export const NODE_ALIASES: Record<string, RegExp> = {
 /** AWS/TPWS/DSD on UK stock. */
 const UK_SAFETY: Record<string, CabField> = {
   awsSunflower: { path: `${CDA}/{AWS}.Function.GetAWS_SunflowerState`, field: "CurrentState" },
+  // AWS_WarningState is an enum (not a boolean), so it only backs up the explicit
+  // "driver must acknowledge" / "acknowledged" signals below.
   awsWarning: { path: `${CDA}/{AWS}.Property.AWS_WarningState` },
+  awsAckRequired: { path: `${CDA}/{AWS}.Function.GetAWS_AcknowledgeRequired` },
+  awsAcknowledged: { path: `${CDA}/{AWS}.Function.GetIsAcknowledged` },
+  awsHorn: { path: `${CDA}/{AWS}.Function.GetAWS_AudioWarningHorn` },
   tpwsTrainStop: { path: `${CDA}/{AWS}.Function.GetTPWS_TrainStopIndicator`, field: "bIsOn" },
   tpwsTrainStopFlashing: { path: `${CDA}/{AWS}.Function.GetTPWS_TrainStopIndicator`, field: "bIsFlashing" },
   tpwsOverspeed: { path: `${CDA}/{AWS}.Function.GetTPWS_OverspeedIndicator`, field: "bIsOn" },
@@ -137,6 +142,8 @@ export const PROFILES: LocoProfile[] = [
     fields: {
       awsSunflower: { path: `${CDA}/AWS_TPWS.Property.AWS_SunflowerState` },
       awsWarning: { path: `${CDA}/AWS_TPWS.Function.Get_WarningIndicator` },
+      awsAcknowledged: { path: `${CDA}/AWS_TPWS.Function.Get_Acknowledged` },
+      awsSignalState: { path: `${CDA}/AWS_TPWS.Property.AWS_SignalState` },
       // TPWS here reports one combined brake demand, not separate train-stop/overspeed lamps.
       tpwsTrainStop: { path: `${CDA}/AWS_TPWS.Property.bIsBrakeDemand_TPWS` },
       safetyBrakeDemand: { path: `${CDA}/AWS_TPWS.Property.bIsBrakeDemand` },

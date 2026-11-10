@@ -5,8 +5,10 @@ import {
   type DriverAidState,
   type DriverAidTrackData,
   type PositionState,
+  splitPlatform,
   type SpeedValue,
   type TrackState,
+  type TrackStop,
   type Vec3,
 } from "@tsw/shared";
 
@@ -135,16 +137,54 @@ export function normalizePlayerInfo(p: DriverAidPlayerInfo): PositionState {
   };
 }
 
+/**
+ * On a timetabled service the game lists its calling points as `stations`
+ * (just the station name, at the station) and the platforms ahead as `markers`
+ * ("Clapham Junction 15", at the stopping point). In free roam only markers
+ * exist. Both used to be merged into one list, which showed every stop twice.
+ */
 export function normalizeTrackData(t: DriverAidTrackData): TrackState {
+  const stations = t.stations ?? [];
+  const platforms = t.markers ?? [];
+  const byDistance = <T extends { distance: number }>(list: T[]) => list.sort((a, b) => a.distance - b.distance);
+
+  const markers = byDistance(
+    platforms.map((m) => ({
+      name: m.stationName || m.markerName,
+      type: m.markerType,
+      distance: m.distanceToStationCM * CM,
+      platformLength: m.platformLength * CM,
+    })),
+  );
+
+  const calling = stations.length > 0;
+  const stops = byDistance(
+    (calling ? stations : platforms).map((s): TrackStop => {
+      const { name, platform } = calling
+        ? { name: s.stationName || s.markerName, platform: null as string | null }
+        : splitPlatform(s.stationName || s.markerName);
+      // The stopping point is the platform marker for this station, when there is one.
+      const marker = calling
+        ? platforms.find((m) => {
+            const split = splitPlatform(m.stationName || m.markerName);
+            return split.name === name || (m.stationName || "").startsWith(`${name} `);
+          })
+        : s;
+      const split = marker ? splitPlatform(marker.stationName || marker.markerName) : { platform };
+      return {
+        name,
+        platform: split.platform ?? platform,
+        distance: (marker ?? s).distanceToStationCM * CM,
+        platformLength: (marker ?? s).platformLength * CM,
+        type: s.markerType,
+        calling,
+      };
+    }),
+  );
+
   return {
-    markers: [...(t.stations ?? []), ...(t.markers ?? [])]
-      .map((m) => ({
-        name: m.stationName || m.markerName,
-        type: m.markerType,
-        distance: m.distanceToStationCM * CM,
-        platformLength: m.platformLength * CM,
-      }))
-      .sort((a, b) => a.distance - b.distance),
+    markers,
+    stops,
     heights: (t.trackHeights ?? []).map((h) => ({
       height: h.height * CM,
       distance: h.distanceToHeight * CM,

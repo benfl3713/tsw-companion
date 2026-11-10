@@ -35,7 +35,7 @@ function tone(freq: number, start: number, duration: number, type: OscillatorTyp
   osc.stop(t0 + duration + 0.02);
 }
 
-export type AlertSound = "approach" | "brake" | "urgent" | "overspeed" | "aws" | "dsd";
+export type AlertSound = "approach" | "brake" | "urgent" | "overspeed" | "aws" | "dsd" | "doors";
 
 /** One burst of each alert; repeating alerts call this on an interval. */
 export function play(sound: AlertSound) {
@@ -60,6 +60,10 @@ export function play(sound: AlertSound) {
       break;
     case "dsd":
       tone(1400, 0, 0.25, "square", 0.08);
+      break;
+    case "doors": // station-style two-note chime (rising), like a platform announcement
+      tone(659, 0, 0.3, "sine", 0.16);
+      tone(880, 0.32, 0.45, "sine", 0.16);
       break;
   }
 }

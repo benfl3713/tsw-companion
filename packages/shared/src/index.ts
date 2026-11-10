@@ -142,8 +142,17 @@ export interface ObjectiveState {
   /** Seconds; null when the objective has no wait. */
   waitTime: number | null;
   currentWaitTime: number | null;
+  /**
+   * Seconds of dwell left. The game's CurrentWaitTime might count up or down,
+   * so the bridge works out which by watching it move; null until it has.
+   */
+  waitRemaining: number | null;
   waitForDoorOpen: boolean;
   waitForDoorClosed: boolean;
+  /** Scheduled time as seconds of the route-local day, when the game provides one. */
+  scheduledTime: number | null;
+  /** Whether scheduledTime is an arrival (true) or a departure/completion (false). */
+  scheduledIsArrival: boolean;
 }
 
 export type CabValue = number | boolean | string | null;
@@ -155,6 +164,8 @@ export interface CabState {
 
 export * from "./profiles.js";
 export * from "./braking.js";
+export * from "./safety.js";
+export * from "./schedule.js";
 
 export type ConnectionStatus = "no-key" | "waiting-for-game" | "connected" | "no-train";
 
@@ -234,8 +245,28 @@ export interface PositionState {
 }
 
 export interface TrackState {
+  /** Platform/siding markers ahead, one per platform. */
   markers: { name: string; type: string; distance: number; platformLength: number }[];
+  /**
+   * Where the service stops, nearest first. On a timetabled service these are
+   * its calling points (the game's station list, each paired with its platform);
+   * in free roam they're just the platforms ahead.
+   */
+  stops: TrackStop[];
   heights: { height: number; distance: number; tunnel: boolean }[];
+}
+
+export interface TrackStop {
+  /** Station name, e.g. "Clapham Junction". */
+  name: string;
+  /** Platform number or letter, when the game gives one. */
+  platform: string | null;
+  /** Metres to where the train stops (the platform marker; else the station). */
+  distance: number;
+  platformLength: number;
+  type: string;
+  /** True when the service calls here (from the game's station list). */
+  calling: boolean;
 }
 
 export interface WorldState {
